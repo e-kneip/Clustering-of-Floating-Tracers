@@ -319,6 +319,21 @@ class RossbyOcean():
         self.l = self.wavevectors[:, 1]
         self = RossbyOcean(self.waves, beta=self.beta)
 
+    def add_random_wave(self, xlim=(-1, 1), ylim=(-1, 1), plim=(0, 2 * np.pi)):
+        """Add a RossbyWave to the Rossbyocean with random wavevector.
+
+            Parameters:
+                xlim (tuple) = lower and upperbounds of k wavevector component
+                ylim (tuple) = lower and upperbounds of l wavevector component
+                plim (tuple) = lower and upperbounds of phase
+
+            Returns:
+        """
+        k = (xlim[1] - xlim[0]) * np.random.random() + xlim[0]
+        l = (ylim[1] - ylim[0]) * np.random.random() + ylim[0]
+        phase = (plim[1] - plim[0]) * np.random.random() + plim[0]
+        self.add_wave(RossbyWave([k, l], phase))
+
     def random_wavevectors(x, y, xlim=(-5, 5), ylim=(-5, 5)):
         pass
 
