@@ -351,6 +351,8 @@ class RossbyOcean():
         Add a RossbyWave to the Rossbyocean with random wavevector.
     add_random_waves(self, n, xlim=(-5, 5), ylim=(-5, 5), plim=(0, 2 * np.pi)):
         Add n random wavevectors.
+    normal_wavevectors(xlim=(-5, 5, 10), ylim=(-5, 5, 10)):
+        Add RossbyWaves with wavevectors (k, l) in a grid.
     """
 
     def __init__(self, rossby_waves, beta=1):
@@ -474,9 +476,29 @@ class RossbyOcean():
         for i in range(n):
             self.add_random_wave(xlim, ylim, plim)
 
-    def normal_wavevectors(xlim=(-5, 5, 10), ylim=(-5, 5, 10)):
+    def add_grid_waves(self, xlim=(-5, 5, 10), ylim=(-5, 5, 10), phase=True):
+        """
+        Add RossbyWaves with wavevectors (k, l) in a grid.
+        
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        phase : bool
+            if True, add random phases in (0, 2*np.pi), else phase=0
+        
+        Returns
+        -------"""
         x, y = np.linspace(*xlim), np.linspace(*ylim)
-        X, Y = np.meshgrid(x, y)
+        for i in x:
+            for j in y:
+                if phase:
+                    p = 2 * np.pi * np.random.random()
+                else:
+                    p = 0
+                self.add_wave(RossbyWave((i, j), p))
 
     # add normal wavevectors
     # set up streamfunction
