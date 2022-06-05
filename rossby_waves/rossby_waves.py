@@ -1,10 +1,14 @@
 """Implementation of Rossby waves."""
 
+from cmath import phase
 import numpy as np
 from mpl_toolkits import mplot3d
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
+
+# scale of sphericity for Rossby waves on Earth
+# beta = some-universal-number
 
 
 def amplitude(wavevector):
@@ -57,7 +61,7 @@ class RossbyWave:
     """
 
     def __init__(self, wavevector, phase=0, beta=1):
-        self.wavevector = wavevector
+        self.wavevector = list(wavevector)
         self.k = wavevector[0]
         self.l = wavevector[1]
         self.phase = phase
@@ -248,15 +252,21 @@ class RossbyWave:
     # function plotting concentrations
 
 
-class RossbyOcean(RossbyWave):
+class RossbyOcean():
     """Collection of Rossby waves.
 
     Attributes
     ----------
-    wavevector : list
-        list of wavevectors (k, l) of wavenumbers
-    phase : float
-        phase of the wave
+    waves : list
+        list of RossbyWaves in RossbyOcean
+    wavevectors : np.ndarray
+        array of wavevectors of RossbyWaves
+    phases : np.ndarray
+        array of phases
+    k : np.ndarray
+        array of 1st wavevector components
+    l : np.ndarray
+        array of 2nd wavevector components
     beta : float
         scale of sphericity
 
@@ -266,11 +276,13 @@ class RossbyOcean(RossbyWave):
         Return streamfunction of Rossby wave.
     """
 
-    def __init__(self, wavevector, phase=0, beta=1, dist="normal"):
-        super().__init__(wavevector, phase=phase, beta=beta)
-        self.k = self.wavevector[:, 0]
-        self.l = self.wavevector[:, 1]
-        self.dist = dist
+    def __init__(self, rossby_waves, beta=1):
+        self.waves = rossby_waves
+        self.wavevectors = np.array([wave.wavevector for wave in rossby_waves])
+        self.phases = np.array([wave.phase for wave in rossby_waves])
+        self.k = self.wavevectors[:, 0]
+        self.l = self.wavevectors[:, 1]
+        self.beta = beta
 
     def streamfunction(self, x, y, t):
         """
@@ -285,17 +297,34 @@ class RossbyOcean(RossbyWave):
                 psi (float) = streamfunction at x at time t
         """
         psi = sum(
-            amplitude(self.wavevector.transpose()) *
+            amplitude(self.wavevectors.transpose()) *
             np.cos(self.k * x + self.l * y -
-                   dispersion(self.wavevector.transpose(), self.beta) * t +
-                   self.phase))
+                   dispersion(self.wavevectors.transpose(), self.beta) * t +
+                   self.phases))
         return psi
+
+    def add_wave(self, wave):
+        """
+        Add a RossbyWave to the RossbyOcean.
+        
+            Parameters:
+                wave (RossbyWave) = RossbyWave to be added
+                
+            Returns:
+        """
+        self.waves.append(wave)
+        self.wavevectors = np.array([wave.wavevector for wave in self.waves])
+        self.phases = np.array([wave.phase for wave in self.waves])
+        self.k = self.wavevectors[:, 0]
+        self.l = self.wavevectors[:, 1]
+        self = RossbyOcean(self.waves, beta=self.beta)
 
     def random_wavevectors(x, y, xlim=(-5, 5), ylim=(-5, 5)):
         pass
 
     def normal_wavevectors(xlim=(-5, 5, 10), ylim=(-5, 5, 10)):
-        X, Y = np.meshgrid(xlim, ylim)
+        x, y = np.linspace(*xlim), np.linspace(*ylim)
+        X, Y = np.meshgrid(x, y)
 
     # function setting random phases to each wave, use decorators?
     # add random Rossbywave wavevector
