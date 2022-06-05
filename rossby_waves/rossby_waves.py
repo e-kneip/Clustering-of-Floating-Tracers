@@ -49,6 +49,10 @@ class RossbyWave:
     ----------
     wavevector : tuple
         wavevector (k, l) of wavenumbers
+    k : float
+        1st component of wavevector
+    l : float
+        2nd component of wavevector
     phase : float
         phase of the wave
     beta : float
@@ -102,7 +106,8 @@ class RossbyWave:
         plt.contour(X, Y, Z)
         plt.xlabel('X')
         plt.ylabel('Y')
-        plt.title(f"k={self.k}, l={self.l}, beta={self.beta}")
+        plt.title(
+            f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}")
 
     def animate_streamfunction(self,
                                xlim=(-1, 1, 100),
@@ -135,7 +140,9 @@ class RossbyWave:
             plt.cla()
             plt.xlabel('X')
             plt.ylabel('Y')
-            plt.title(f"k={self.k}, l={self.l}, beta={self.beta}")
+            plt.title(
+                f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+            )
             plt.contour(xx, yy, plot[i])
 
         anim = FuncAnimation(fig,
@@ -162,13 +169,7 @@ class RossbyWave:
         phi = eps * self.streamfunction(x, y, t)
         return phi
 
-    def velocity(self,
-                 x,
-                 y,
-                 t,
-                 eps=1 / 10,
-                 irrotational=False,
-                 solenoidal=False):
+    def velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
         """
         Return velocity of Rossby wave at x at time t.
 
@@ -211,7 +212,10 @@ class RossbyWave:
                       xlim=(-1, 1, 100),
                       ylim=(-1, 1, 100),
                       t=0,
-                      density=1):
+                      density=1,
+                      eps=0.1,
+                      irrotational=False,
+                      solenoidal=False):
         """
         Streamplot the velocity of the Rossby wave.
         
@@ -220,13 +224,21 @@ class RossbyWave:
                 xlim (tuple) = (x start, x end, x points)
                 ylim (tuple) = (y start, y end, y points)
                 density (float) = density of streamplot arrows
+                eps (float) = ratio of stream to potential function
+                irrotational (bool) = curl-free wave
+                solenoidal (bool) = divergence-free wave
             
             Returns:
         """
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
-        u, v = self.velocity(X, Y, t)
+        u, v = self.velocity(X,
+                             Y,
+                             t,
+                             eps=eps,
+                             irrotational=irrotational,
+                             solenoidal=solenoidal)
 
         fig = plt.figure(figsize=(10, 5))
         gs = gridspec.GridSpec(nrows=1, ncols=1)
@@ -235,19 +247,16 @@ class RossbyWave:
                              Y,
                              u,
                              v,
-                             color=u + v,
                              density=density,
                              linewidth=1,
                              arrowsize=1.5,
-                             arrowstyle='->',
-                             cmap='summer')
+                             arrowstyle='->')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_title(f"k={self.k}, l={self.l}, beta={self.beta}")
-        fig.colorbar(strm.lines)
+        ax.set_title(
+            f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}")
 
     # figure out beta default
-    # find new velocity
     # function plotting tracer path
     # function plotting concentrations
 
@@ -358,8 +367,7 @@ class RossbyOcean():
         x, y = np.linspace(*xlim), np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
 
-    # function setting random phases to each wave, use decorators?
-    # add random Rossbywave wavevector
+    # add normal wavevectors
     # set up streamfunction
     # set up potential
 
