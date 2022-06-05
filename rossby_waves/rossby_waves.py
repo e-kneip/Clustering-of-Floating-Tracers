@@ -15,11 +15,15 @@ def amplitude(wavevector):
     """
     Return amplitude of a Rossby wave.
 
-        Parameters:
-            wavevector (np.ndarray) = wavevector np.array([k, l]) of wavenumbers
+    Parameters
+    ----------
+    wavevector : np.ndarray
+        wavevector np.array([k, l]) of wavenumbers
         
-        Returns:
-            amplitude (float) = amplitude of Rossby wave
+    Returns
+    -------
+    amplitude : float
+        amplitude of Rossby wave
     """
     amplitude = np.exp(-0.1 * wavevector[0]**2 - 0.1 * wavevector[1]**2) * (
         wavevector[0]**2 + wavevector[1]**2)
@@ -30,12 +34,17 @@ def dispersion(wavevector, beta):
     """
     Return frequency from wavevector according to Rossby waves.
 
-        Parameters:
-            wavevector (np.ndarray) = wavevector np.array([k, l]) of wavenumbers
-            beta (float) = scale of sphericity
+    Parameters
+    ----------
+    wavevector : np.ndarray
+        wavevector np.array([k, l]) of wavenumbers
+    beta : float
+        scale of sphericity
         
-        Returns:
-            omega (float) = frequency of Rossby wave
+    Returns
+    -------
+    omega : float
+        frequency of Rossby wave
     """
     omega = -beta * wavevector[0] / (wavevector[0]**2 + wavevector[1]**2)
     return omega
@@ -47,7 +56,7 @@ class RossbyWave:
 
     Attributes
     ----------
-    wavevector : tuple
+    wavevector : array_like
         wavevector (k, l) of wavenumbers
     k : float
         1st component of wavevector
@@ -62,6 +71,16 @@ class RossbyWave:
     -------
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
+    plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0):
+        Contour plot of the streamfunction of a Rossby wave.
+    animate_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), tlim=(0, 1000, 101), filename="streamfunction"):
+        Contour plot the streamfunction of a Rossby wave.
+    potentialfunction(self, x, y, t, eps=0.1):
+        Return streamfunction of Rossby wave.
+    velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
+        Return velocity of Rossby wave at x at time t.
+    plot_velocity(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0, density=1, eps=0.1, irrotational=False, solenoidal=False):
+        Streamplot the velocity of the Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=1):
@@ -75,13 +94,19 @@ class RossbyWave:
         """
         Return streamfunction of Rossby wave.
 
-            Parameters:
-                x (float) = x position coordinate
-                y (float) = y position coordinate
-                t (float) = time
+        Parameters
+        ----------
+        x : float
+            x position coordinate
+        y : float
+            y position coordinate
+        t : float
+            time
 
-            Returns:
-                psi (float) = streamfunction at x at time t
+        Returns
+        -------
+        psi : float
+            streamfunction at x at time t
         """
         psi = amplitude(self.wavevector) * np.cos(
             self.k * x + self.l * y -
@@ -92,12 +117,17 @@ class RossbyWave:
         """
         Contour plot of the streamfunction of a Rossby wave.
 
-            Parameters:
-                xlim (tuple) = (x start, x end, x points)
-                ylim (tuple) = (y start, y end, y points)
-                t (float) = time
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        t : float
+            time
 
-            Returns:
+        Returns
+        -------
         """
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
@@ -117,13 +147,19 @@ class RossbyWave:
         """
         Contour plot the streamfunction of a Rossby wave.
 
-            Parameters:
-                xlim (tuple) = (x start, x end, x points)
-                ylim (tuple) = (y start, y end, y points)
-                t (tuple) = (time start, time end, time points)
-                filename = file saved as {filename}.gif
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        tlim : array_like
+            (time start, time end, time points)
+        filename : str
+            file saved as {filename}.gif
 
-            Returns:
+        Returns
+        -------
         """
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
@@ -157,14 +193,21 @@ class RossbyWave:
         """
         Return streamfunction of Rossby wave.
 
-            Parameters:
-                x (float) = x position coordinate
-                y (float) = y position coordinate
-                t (float) = time
-                eps (float) = ratio of stream to potential function
+        Parameters
+        ----------
+        x : float
+            x position coordinate
+        y : float
+            y position coordinate
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
 
-            Returns:
-                phi (float) = potentialfunction at x at time t
+        Returns
+        -------
+        phi : float
+            potentialfunction at x at time t
         """
         phi = eps * self.streamfunction(x, y, t)
         return phi
@@ -173,16 +216,24 @@ class RossbyWave:
         """
         Return velocity of Rossby wave at x at time t.
 
-            Parameters:
-                x (float) = x position coordinate
-                y (float) = y position coordinate
-                t (float) = time
-                eps (float) = ratio of stream to potential function
-                irrotational (bool) = curl-free wave
-                solenoidal (bool) = divergence-free wave
+        Parameters:
+        x : float
+            x position coordinate
+        y : float
+            y position coordinate
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
 
-            Returns:
-                v (np.ndarray) = velocity at x at time t
+        Returns
+        -------
+        v : np.ndarray
+            velocity at x at time t
         """
         # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
         # eps*phi = psi = A * exp(k.x - omega * t)
@@ -219,16 +270,25 @@ class RossbyWave:
         """
         Streamplot the velocity of the Rossby wave.
         
-            Parameters:
-                t (float) = time
-                xlim (tuple) = (x start, x end, x points)
-                ylim (tuple) = (y start, y end, y points)
-                density (float) = density of streamplot arrows
-                eps (float) = ratio of stream to potential function
-                irrotational (bool) = curl-free wave
-                solenoidal (bool) = divergence-free wave
+        Parameters
+        ----------
+        t : float
+            time
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        density : float
+            density of streamplot arrows
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
             
-            Returns:
+        Returns
+        -------
         """
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
@@ -283,6 +343,14 @@ class RossbyOcean():
     -------
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
+    potentialfunction(x, y, t, eps=0.1):
+        Return potentialfunction of Rossby wave.
+    add_wave(wave):
+        Add a RossbyWave to the RossbyOcean.
+    add_random_wave(self, xlim=(-5, 5), ylim=(-5, 5), plim=(0, 2 * np.pi)):
+        Add a RossbyWave to the Rossbyocean with random wavevector.
+    add_random_waves(self, n, xlim=(-5, 5), ylim=(-5, 5), plim=(0, 2 * np.pi)):
+        Add n random wavevectors.
     """
 
     def __init__(self, rossby_waves, beta=1):
@@ -297,13 +365,19 @@ class RossbyOcean():
         """
         Return streamfunction of Rossby ocean.
 
-            Parameters:
-                x (float) = x position coordinate
-                y (float) = y position coordinate
-                t (float) = time
+        Parameters
+        ----------
+        x : float
+            x position coordinate
+        y : float
+            y position coordinate
+        t : float
+            time
 
-            Returns:
-                psi (float) = streamfunction at x at time t
+        Returns
+        -------
+        psi : float
+            streamfunction at x at time t
         """
         psi = sum(
             amplitude(self.wavevectors.transpose()) *
@@ -312,14 +386,40 @@ class RossbyOcean():
                    self.phases))
         return psi
 
+    def potentialfunction(self, x, y, t, eps=0.1):
+        """
+        Return potentialfunction of Rossby wave.
+
+        Parameters
+        ----------
+        x : float
+            x position coordinate
+        y : float
+            y position coordinate
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
+
+        Returns
+        -------
+        phi : float
+            potentialfunction at x at time t
+        """
+        phi = eps * self.streamfunction(x, y, t)
+        return phi
+
     def add_wave(self, wave):
         """
         Add a RossbyWave to the RossbyOcean.
         
-            Parameters:
-                wave (RossbyWave) = RossbyWave to be added
+        Parameters
+        ----------
+        wave : RossbyWave
+            RossbyWave to be added
                 
-            Returns:
+        Returns
+        -------
         """
         self.waves.append(wave)
         self.wavevectors = np.array([wave.wavevector for wave in self.waves])
@@ -332,12 +432,17 @@ class RossbyOcean():
         """
         Add a RossbyWave to the Rossbyocean with random wavevector.
 
-            Parameters:
-                xlim (tuple) = lower and upperbounds of k wavevector component
-                ylim (tuple) = lower and upperbounds of l wavevector component
-                plim (tuple) = lower and upperbounds of phase
+        Parameters
+        ----------
+        xlim : array_like
+            (l, u) lower and upperbounds of k wavevector component
+        ylim : array_like
+            (l, u) lower and upperbounds of l wavevector component
+        plim : array_like
+            (l, u) lower and upperbounds of phase
 
-            Returns:
+        Returns
+        -------
         """
         k = (xlim[1] - xlim[0]) * np.random.random() + xlim[0]
         l = (ylim[1] - ylim[0]) * np.random.random() + ylim[0]
@@ -352,13 +457,19 @@ class RossbyOcean():
         """
         Add n random wavevectors.
         
-            Parameters:
-                n = number of wavevectors to add
-                xlim (tuple) = lower and upperbounds of k wavevector component
-                ylim (tuple) = lower and upperbounds of l wavevector component
-                plim (tuple) = lower and upperbounds of phase
+        Parameters
+        ----------
+        n : int
+            number of wavevectors to add
+        xlim : array_like
+            (l, u) lower and upperbounds of k wavevector component
+        ylim : array_like
+            (l, u) lower and upperbounds of l wavevector component
+        plim : array_like
+            (l, u) lower and upperbounds of phase
 
-            Returns:
+        Returns
+        -------
         """
         for i in range(n):
             self.add_random_wave(xlim, ylim, plim)
