@@ -71,6 +71,10 @@ class RossbyWave:
 
     Methods
     -------
+    __str__(self):
+        Return string representation: RossbyWave([k, l], phase).
+    __repr__(self):
+        Return canonical string representation: RossbyWave([k, l], phase, beta).
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
     plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0):
@@ -93,10 +97,12 @@ class RossbyWave:
         self.beta = beta
 
     def __str__(self):
+        """Return string representation: RossbyWave([k, l], phase)."""
         return self.__class__.__name__ + "(" + str(
             self.wavevector) + ", " + str(self.phase) + ")"
 
     def __repr__(self):
+        """Return canonical string representation: RossbyWave([k, l], phase, beta)."""
         return self.__class__.__name__ + "(" + repr(
             self.wavevector) + ", " + repr(self.phase) + ", " + repr(
                 self.beta) + ")"
@@ -390,12 +396,14 @@ class RossbyOcean(RossbyWave):
         self.beta = beta
 
     def __str__(self):
+        """Return string representation: RossbyOcean(RossbyWave(wavevector, phase), ...)"""
         waves = ""
         for wave in self.waves:
             waves += str(wave) + ", "
         return self.__class__.__name__ + "(" + waves[0:-2] + ")"
 
     def __repr__(self):
+        """Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta)"""
         return self.__class__.__name__ + "(" + str(self.waves) + ", " + str(
             self.beta) + ")"
 
