@@ -92,6 +92,15 @@ class RossbyWave:
         self.phase = phase
         self.beta = beta
 
+    def __str__(self):
+        return self.__class__.__name__ + "(" + str(
+            self.wavevector) + ", " + str(self.phase) + ")"
+
+    def __repr__(self):
+        return self.__class__.__name__ + "(" + repr(
+            self.wavevector) + ", " + repr(self.phase) + ", " + repr(
+                self.beta) + ")"
+
     def streamfunction(self, x, y, t):
         """
         Return streamfunction of Rossby wave.
@@ -325,8 +334,12 @@ class RossbyWave:
                              cmap="summer")
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_title(
-            f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}")
+        if isinstance(self, RossbyOcean):
+            ax.set_title("RossbyOcean Velocity")
+        else:
+            ax.set_title(
+                f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+            )
         fig.colorbar(strm.lines)
 
     # figure out beta default
@@ -376,6 +389,16 @@ class RossbyOcean(RossbyWave):
         self.l = self.wavevectors[:, 1]
         self.beta = beta
 
+    def __str__(self):
+        waves = ""
+        for wave in self.waves:
+            waves += str(wave) + ", "
+        return self.__class__.__name__ + "(" + waves[0:-2] + ")"
+
+    def __repr__(self):
+        return self.__class__.__name__ + "(" + str(self.waves) + ", " + str(
+            self.beta) + ")"
+
     def streamfunction(self, x, y, t):
         """
         Return streamfunction of Rossby ocean.
@@ -396,17 +419,14 @@ class RossbyOcean(RossbyWave):
         """
         psi = 0
         for wave in self.waves:
-            psi += amplitude(wave.wavevector) * np.cos(
-                wave.k * x + wave.l * y -
-                dispersion(wave.wavevector, self.beta) * t + wave.phase)
+            psi += wave.streamfunction(x, y, t)
         return psi
 
-    def potentialfunction(self, x, y, t, eps=0.1):
+    def velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
         """
-        Return potentialfunction of Rossby wave.
+        Return velocity of Rossby wave at x at time t.
 
-        Parameters
-        ----------
+        Parameters:
         x : float
             x position coordinate
         y : float
@@ -415,14 +435,25 @@ class RossbyOcean(RossbyWave):
             time
         eps : float
             ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
 
         Returns
         -------
-        phi : float
-            potentialfunction at x at time t
+        v : np.ndarray
+            velocity at x at time t
         """
-        phi = eps * self.streamfunction(x, y, t)
-        return phi
+        # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
+        # eps*phi = psi = A * exp(k.x - omega * t)
+        v = [0, 0]
+        if irrotational and solenoidal:
+            raise ValueError(
+                "Wave cannot be both irrotational and solenoidal.")
+        for wave in self.waves:
+            v += wave.velocity(x, y, t, eps, irrotational, solenoidal)
+        return v
 
     def add_wave(self, wave):
         """
