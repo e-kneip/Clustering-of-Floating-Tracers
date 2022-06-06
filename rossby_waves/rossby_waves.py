@@ -1,6 +1,8 @@
 """Implementation of Rossby waves."""
 
 from cmath import phase
+from random import randrange
+from turtle import color
 import numpy as np
 from mpl_toolkits import mplot3d
 import matplotlib.gridspec as gridspec
@@ -136,8 +138,13 @@ class RossbyWave:
         plt.contour(X, Y, Z)
         plt.xlabel('X')
         plt.ylabel('Y')
-        plt.title(
-            f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}")
+        plt.colorbar()
+        if not isinstance(self, RossbyOcean):
+            plt.title(
+                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+            )
+        else:
+            plt.title("RossbyOcean")
 
     def animate_streamfunction(self,
                                xlim=(-1, 1, 100),
@@ -176,9 +183,12 @@ class RossbyWave:
             plt.cla()
             plt.xlabel('X')
             plt.ylabel('Y')
-            plt.title(
-                f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
-            )
+            if not isinstance(self, RossbyOcean):
+                plt.title(
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+                )
+            else:
+                plt.title("RossbyOcean")
             plt.contour(xx, yy, plot[i])
 
         anim = FuncAnimation(fig,
@@ -307,21 +317,24 @@ class RossbyWave:
                              Y,
                              u,
                              v,
+                             color=u + v,
                              density=density,
                              linewidth=1,
                              arrowsize=1.5,
-                             arrowstyle='->')
+                             arrowstyle='->',
+                             cmap="summer")
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_title(
             f"k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}")
+        fig.colorbar(strm.lines)
 
     # figure out beta default
     # function plotting tracer path
     # function plotting concentrations
 
 
-class RossbyOcean():
+class RossbyOcean(RossbyWave):
     """Collection of Rossby waves.
 
     Attributes
@@ -381,11 +394,11 @@ class RossbyOcean():
         psi : float
             streamfunction at x at time t
         """
-        psi = sum(
-            amplitude(self.wavevectors.transpose()) *
-            np.cos(self.k * x + self.l * y -
-                   dispersion(self.wavevectors.transpose(), self.beta) * t +
-                   self.phases))
+        psi = 0
+        for wave in self.waves:
+            psi += amplitude(wave.wavevector) * np.cos(
+                wave.k * x + wave.l * y -
+                dispersion(wave.wavevector, self.beta) * t + wave.phase)
         return psi
 
     def potentialfunction(self, x, y, t, eps=0.1):
@@ -500,9 +513,9 @@ class RossbyOcean():
                     p = 0
                 self.add_wave(RossbyWave((i, j), p))
 
-    # add normal wavevectors
-    # set up streamfunction
-    # set up potential
+    # plot streamfunction
+    # plot velocity
+    # animate velocity
 
 
 # function solving Runge-Kutta-4
