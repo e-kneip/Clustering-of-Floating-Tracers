@@ -385,6 +385,8 @@ class RossbyOcean(RossbyWave):
         Add n random wavevectors.
     normal_wavevectors(xlim=(-5, 5, 10), ylim=(-5, 5, 10)):
         Add RossbyWaves with wavevectors (k, l) in a grid.
+    remove_wave(self, index):
+        Remove the RossbyWave at index in the RossbyOcean.
     """
 
     def __init__(self, rossby_waves, beta=1):
@@ -476,6 +478,25 @@ class RossbyOcean(RossbyWave):
         -------
         """
         self.waves.append(wave)
+        self.wavevectors = np.array([wave.wavevector for wave in self.waves])
+        self.phases = np.array([wave.phase for wave in self.waves])
+        self.k = self.wavevectors[:, 0]
+        self.l = self.wavevectors[:, 1]
+        self = RossbyOcean(self.waves, beta=self.beta)
+
+    def remove_wave(self, index):
+        """
+        Remove the RossbyWave at index in the RossbyOcean.
+        
+        Parameters
+        ----------
+        index : int
+            index of RossbyWave to be removed
+            
+        Returns
+        -------
+        """
+        self.waves.pop(index)
         self.wavevectors = np.array([wave.wavevector for wave in self.waves])
         self.phases = np.array([wave.phase for wave in self.waves])
         self.k = self.wavevectors[:, 0]
