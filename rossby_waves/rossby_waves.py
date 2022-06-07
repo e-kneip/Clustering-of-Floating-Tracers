@@ -1,11 +1,11 @@
 """Implementation of Rossby waves."""
 
-# animate overlap of streamfunction on quiverplot to check points runge kutta follows lines
 # check beta???
 # plot concentrations?
 
 # solve Runge-Kutta-4
 # plot tracer path
+# check Runge-Kutta follows lines
 # animate tracer path
 
 import numpy as np
@@ -348,7 +348,7 @@ class RossbyWave:
         fig = plt.figure(figsize=(10, 5))
         gs = gridspec.GridSpec(nrows=1, ncols=1)
         ax = fig.add_subplot(gs[0, 0])
-        strm = ax.quiver(X, Y, u, v)
+        ax.quiver(X, Y, u, v)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         if isinstance(self, RossbyOcean):
