@@ -37,7 +37,7 @@ def amplitude(wavevector):
     return amplitude
 
 
-def dispersion(wavevector, beta):
+def dispersion(wavevector, beta=beta):
     """
     Return frequency from wavevector according to Rossby waves.
 
@@ -91,7 +91,7 @@ class RossbyWave:
     velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
         Return velocity of Rossby wave at x at time t.
     plot_velocity(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0, density=1, eps=0.1, irrotational=False, solenoidal=False):
-        Streamplot the velocity of the Rossby wave.
+        Quiverplot the velocity of the Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=beta):
@@ -305,15 +305,14 @@ class RossbyWave:
         return np.array(v)
 
     def plot_velocity(self,
-                      xlim=(-1, 1, 100),
-                      ylim=(-1, 1, 100),
+                      xlim=(-np.pi, np.pi, 20),
+                      ylim=(-np.pi, np.pi, 20),
                       t=0,
-                      density=1,
                       eps=0.1,
                       irrotational=False,
                       solenoidal=False):
         """
-        Streamplot the velocity of the Rossby wave.
+        Quiverplot the velocity of the Rossby wave.
         
         Parameters
         ----------
@@ -348,27 +347,15 @@ class RossbyWave:
         fig = plt.figure(figsize=(10, 5))
         gs = gridspec.GridSpec(nrows=1, ncols=1)
         ax = fig.add_subplot(gs[0, 0])
-        strm = ax.streamplot(
-            X,
-            Y,
-            u,
-            v,
-            # color=u + v,
-            density=density,
-            linewidth=1,
-            arrowsize=1.5,
-            arrowstyle='->'
-            #, cmap="summer"
-        )
+        strm = ax.quiver(X, Y, u, v)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         if isinstance(self, RossbyOcean):
-            ax.set_title("RossbyOcean Velocity")
+            ax.set_title(f"RossbyOcean Velocity at t={t}")
         else:
             ax.set_title(
-                f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+                f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, t={t}"
             )
-        # fig.colorbar(strm.lines)
 
     # check plot_velocity?
     # animate velocity?
