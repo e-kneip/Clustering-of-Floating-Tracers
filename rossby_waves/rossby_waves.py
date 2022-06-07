@@ -1,11 +1,7 @@
 """Implementation of Rossby waves."""
 
-# make animations smooth, fix contour gap?
-# switch to quiver plot
-# test all plots - figure out labelling
 # overlap streamfunction on quiverplot to check points runge kutta follows lines
-# default limits to -pi to pi :)
-# animate velocity for RossbyOcean
+# animate velocity
 # check beta???
 
 import numpy as np
@@ -92,6 +88,8 @@ class RossbyWave:
         Return velocity of Rossby wave at x at time t.
     plot_velocity(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0, density=1, eps=0.1, irrotational=False, solenoidal=False):
         Quiverplot the velocity of the Rossby wave.
+    plot_stream_velocity(self, xlim=(-np.pi, np.pi, 20, 100), ylim=(-np.pi, np.pi, 20, 100), t=0, eps=0.1, irrotational=False, solenoidal=False, lines=50):
+        Contourplot of streamfunction with quiverplot of velocity field of a Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=beta):
@@ -357,7 +355,72 @@ class RossbyWave:
                 f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, t={t}"
             )
 
-    # check plot_velocity?
+    def plot_stream_velocity(self,
+                             xlim=(-np.pi, np.pi, 20, 100),
+                             ylim=(-np.pi, np.pi, 20, 100),
+                             t=0,
+                             eps=0.1,
+                             irrotational=False,
+                             solenoidal=False,
+                             lines=50):
+        """
+        Contourplot of streamfunction with quiverplot of velocity field of a Rossby wave.
+        
+        Parameters
+        ----------
+        t : float
+            time
+        xlim : array_like
+            (x start, x end, x velocity points, x stream points)
+        ylim : array_like
+            (y start, y end, y velocity points, y stream points)
+        density : float
+            density of streamplot arrows
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+        lines : float
+            scale of number of lines
+            
+        Returns
+        -------
+        """
+        xlim, ylim = list(xlim), list(ylim)
+        x_vel, y_vel = np.linspace(*xlim[0:-1]), np.linspace(*ylim[0:-1])
+        xlim.pop(2)
+        ylim.pop(2)
+        x_str, y_str = np.linspace(*xlim), np.linspace(*ylim)
+
+        # contour plot
+        X_str, Y_str = np.meshgrid(x_str, y_str)
+        Z_str = self.streamfunction(X_str, Y_str, t)
+        cplot = plt.contourf(X_str, Y_str, Z_str, lines, cmap="coolwarm")
+        cbar = plt.colorbar(cplot)
+        cbar.ax.set_ylabel("Streamfunction value")
+
+        # quiver plot
+        X_vel, Y_vel = np.meshgrid(x_vel, y_vel)
+        u_vel, v_vel = self.velocity(X_vel,
+                                     Y_vel,
+                                     t,
+                                     eps=eps,
+                                     irrotational=irrotational,
+                                     solenoidal=solenoidal)
+        quiv = plt.quiver(X_vel, Y_vel, u_vel, v_vel)
+
+        # labels
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        if not isinstance(self, RossbyOcean):
+            plt.title(
+                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+        else:
+            plt.title("RossbyOcean Velocity Field with Streamfunction")
+        plt.show()
+
     # animate velocity?
     # figure out beta default
     # function plotting tracer path
