@@ -207,7 +207,7 @@ class RossbyWave:
         xx, yy = np.meshgrid(x, y)
         Y, T, X = np.meshgrid(y, t, x)
         fig, ax = plt.subplots(1)
-        plot = self.streamfunction(X, Y, T)
+        stream = self.streamfunction(X, Y, T)
 
         def init_func():
             plt.cla()
@@ -218,11 +218,10 @@ class RossbyWave:
             plt.ylabel('Y')
             if not isinstance(self, RossbyOcean):
                 plt.title(
-                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
-                )
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
             else:
                 plt.title("RossbyOcean")
-            plt.contourf(xx, yy, plot[i], lines, cmap="coolwarm")
+            plt.contourf(xx, yy, stream[i], lines, cmap="coolwarm")
 
         anim = FuncAnimation(fig,
                              update_plot,
@@ -396,7 +395,12 @@ class RossbyWave:
         xx, yy = np.meshgrid(x, y)
         Y, T, X = np.meshgrid(y, t, x)
         fig, ax = plt.subplots(1)
-        u, v = self.velocity(X, Y, T)
+        u, v = self.velocity(X,
+                             Y,
+                             T,
+                             eps=eps,
+                             irrotational=irrotational,
+                             solenoidal=solenoidal)
 
         def init_func():
             plt.cla()
@@ -407,8 +411,7 @@ class RossbyWave:
             plt.ylabel('Y')
             if not isinstance(self, RossbyOcean):
                 plt.title(
-                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
-                )
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
             else:
                 plt.title("RossbyOcean Velocity Field")
             plt.quiver(xx, yy, u[i], v[i])
@@ -486,6 +489,83 @@ class RossbyWave:
         else:
             plt.title("RossbyOcean Velocity Field with Streamfunction")
         plt.show()
+
+    def animate_stream_velocity(self,
+                                xlim=(-np.pi, np.pi, 20, 100),
+                                ylim=(-np.pi, np.pi, 20, 100),
+                                tlim=(0, 3e13, 100),
+                                lines=50,
+                                eps=0.1,
+                                irrotational=False,
+                                solenoidal=False,
+                                filename="streamvelocityfield"):
+        """
+        Animate the quiver plot of the velocity field of a Rossby wave.
+
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        tlim : array_like
+            (time start, time end, time points)
+        lines : float
+            scale of number of lines
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+        filename : str
+            file saved as {filename}.gif
+
+        Returns
+        -------
+        """
+        xlim, ylim = list(xlim), list(ylim)
+        x_vel, y_vel = np.linspace(*xlim[0:-1]), np.linspace(*ylim[0:-1])
+        xlim.pop(2)
+        ylim.pop(2)
+        x_str, y_str = np.linspace(*xlim), np.linspace(*ylim)
+        t = np.linspace(*tlim)
+
+        xx_vel, yy_vel = np.meshgrid(x_vel, y_vel)
+        Y_vel, T_vel, X_vel = np.meshgrid(y_vel, t, x_vel)
+        xx_str, yy_str = np.meshgrid(x_str, y_str)
+        Y_str, T_str, X_str = np.meshgrid(y_str, t, x_str)
+        fig, ax = plt.subplots(1)
+        u, v = self.velocity(X_vel,
+                             Y_vel,
+                             T_vel,
+                             eps=eps,
+                             irrotational=irrotational,
+                             solenoidal=solenoidal)
+        stream = self.streamfunction(X_str, Y_str, T_str)
+
+        def init_func():
+            plt.cla()
+
+        def update_plot(i):
+            plt.cla()
+            plt.xlabel('X')
+            plt.ylabel('Y')
+            if not isinstance(self, RossbyOcean):
+                plt.title(
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+            else:
+                plt.title("RossbyOcean Streamfunction on Velocity Field")
+            plt.contourf(xx_str, yy_str, stream[i], lines, cmap="coolwarm")
+            plt.quiver(xx_vel, yy_vel, u[i], v[i])
+
+        anim = FuncAnimation(fig,
+                             update_plot,
+                             frames=np.arange(0, len(t)),
+                             init_func=init_func)
+
+        writergif = PillowWriter(fps=30)
+        anim.save(f'{filename}.gif', writer=writergif)
 
 
 class RossbyOcean(RossbyWave):
