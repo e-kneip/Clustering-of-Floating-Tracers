@@ -477,7 +477,9 @@ class RossbyOcean(RossbyWave):
             raise ValueError(
                 "Wave cannot be both irrotational and solenoidal.")
         for wave in self.waves:
-            v += wave.velocity(x, y, t, eps, irrotational, solenoidal)
+            ou, ov = wave.velocity(x, y, t, eps, irrotational, solenoidal)
+            v[0] += ou
+            v[1] += ov
         return v
 
     def add_wave(self, wave):
