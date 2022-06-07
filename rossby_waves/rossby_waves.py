@@ -388,6 +388,10 @@ class RossbyOcean(RossbyWave):
 
     Methods
     -------
+    __str__(self):
+        Return string representation: RossbyOcean(RossbyWave(wavevector, phase), ...).
+    __repr__(self):
+        Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta).
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
     potentialfunction(x, y, t, eps=0.1):
@@ -413,14 +417,14 @@ class RossbyOcean(RossbyWave):
         self.beta = beta
 
     def __str__(self):
-        """Return string representation: RossbyOcean(RossbyWave(wavevector, phase), ...)"""
+        """Return string representation: RossbyOcean(RossbyWave(wavevector, phase), ...)."""
         waves = ""
         for wave in self.waves:
             waves += str(wave) + ", "
         return self.__class__.__name__ + "(" + waves[0:-2] + ")"
 
     def __repr__(self):
-        """Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta)"""
+        """Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta)."""
         return self.__class__.__name__ + "(" + str(self.waves) + ", " + str(
             self.beta) + ")"
 
@@ -534,8 +538,11 @@ class RossbyOcean(RossbyWave):
         Returns
         -------
         """
-        k = (xlim[1] - xlim[0]) * np.random.random() + xlim[0]
-        l = (ylim[1] - ylim[0]) * np.random.random() + ylim[0]
+        k = 0
+        l = 0
+        while k == 0 and l == 0:
+            k = (xlim[1] - xlim[0]) * np.random.random() + xlim[0]
+            l = (ylim[1] - ylim[0]) * np.random.random() + ylim[0]
         phase = (plim[1] - plim[0]) * np.random.random() + plim[0]
         self.add_wave(RossbyWave([k, l], phase))
 
@@ -578,10 +585,13 @@ class RossbyOcean(RossbyWave):
             if True, add random phases in (0, 2*np.pi), else phase=0
         
         Returns
-        -------"""
+        -------
+        """
         x, y = np.linspace(*xlim), np.linspace(*ylim)
         for i in x:
             for j in y:
+                if i == 0 and j == 0:
+                    continue
                 if phase:
                     p = 2 * np.pi * np.random.random()
                 else:
