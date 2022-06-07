@@ -1,10 +1,13 @@
 """Implementation of Rossby waves."""
 
-from cmath import phase
-from random import randrange
-from turtle import color
+# make animations smooth, fix contour gap?
+# switch to quiver plot
+# test all plots - figure out labelling
+# overlap streamfunction on quiverplot to check points runge kutta follows lines
+# default limits to -pi to pi :)
+# animate velocity for RossbyOcean
+
 import numpy as np
-from mpl_toolkits import mplot3d
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
@@ -27,8 +30,9 @@ def amplitude(wavevector):
     amplitude : float
         amplitude of Rossby wave
     """
-    amplitude = np.exp(-0.1 * wavevector[0]**2 - 0.1 * wavevector[1]**2) * (
+    amplitude = np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 / 25) * (
         wavevector[0]**2 + wavevector[1]**2)
+    # spectral power = 5 ie where this maxes, will have 5 periods over domain, sqrt(25)=5
     return amplitude
 
 
@@ -153,7 +157,8 @@ class RossbyWave:
         plt.contour(X, Y, Z)
         plt.xlabel('X')
         plt.ylabel('Y')
-        plt.colorbar()
+        # cbar = plt.colorbar()
+        # cbar.ax.set_ylabel("Streamfunction value")
         if not isinstance(self, RossbyOcean):
             plt.title(
                 f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
@@ -261,7 +266,13 @@ class RossbyWave:
             velocity at x at time t
         """
         # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
-        # eps*phi = psi = A * exp(k.x - omega * t)
+        # eps*phi = psi = Re[A * exp[i(kx + ly - omega * t + phase)]]
+
+        # dpsi/dx = Re[A * ik * exp[i(kx + ly - omega * t + phase)]]
+        #         = A * -k * sin(kx + ly - omega * t + phase)
+        # dpsi/dy = Re[A * il * exp[i(kx + ly - omega * t + phase)]]
+        #         = A * -l * sin(kx + ly - omega * t + phase)
+
         v = [0, 0]
         if irrotational and solenoidal:
             raise ValueError(
@@ -328,16 +339,18 @@ class RossbyWave:
         fig = plt.figure(figsize=(10, 5))
         gs = gridspec.GridSpec(nrows=1, ncols=1)
         ax = fig.add_subplot(gs[0, 0])
-        strm = ax.streamplot(X,
-                             Y,
-                             u,
-                             v,
-                             color=u + v,
-                             density=density,
-                             linewidth=1,
-                             arrowsize=1.5,
-                             arrowstyle='->',
-                             cmap="summer")
+        strm = ax.streamplot(
+            X,
+            Y,
+            u,
+            v,
+            # color=u + v,
+            density=density,
+            linewidth=1,
+            arrowsize=1.5,
+            arrowstyle='->'
+            #, cmap="summer"
+        )
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         if isinstance(self, RossbyOcean):
@@ -346,8 +359,10 @@ class RossbyWave:
             ax.set_title(
                 f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
             )
-        fig.colorbar(strm.lines)
+        # fig.colorbar(strm.lines)
 
+    # check plot_velocity?
+    # animate velocity?
     # figure out beta default
     # function plotting tracer path
     # function plotting concentrations
@@ -573,9 +588,8 @@ class RossbyOcean(RossbyWave):
                     p = 0
                 self.add_wave(RossbyWave((i, j), p))
 
-    # plot streamfunction
     # plot velocity
-    # animate velocity
+    # animate velocity?
 
 
 # function solving Runge-Kutta-4
