@@ -6,14 +6,15 @@
 # overlap streamfunction on quiverplot to check points runge kutta follows lines
 # default limits to -pi to pi :)
 # animate velocity for RossbyOcean
+# check beta???
 
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
-# scale of sphericity for Rossby waves on Earth
-# beta = some-universal-number
+# scale of sphericity for Rossby waves in Ocean
+beta = 2e-11
 
 
 def amplitude(wavevector):
@@ -93,7 +94,7 @@ class RossbyWave:
         Streamplot the velocity of the Rossby wave.
     """
 
-    def __init__(self, wavevector, phase=0, beta=1):
+    def __init__(self, wavevector, phase=0, beta=beta):
         self.wavevector = list(wavevector)
         self.k = wavevector[0]
         self.l = wavevector[1]
@@ -134,7 +135,11 @@ class RossbyWave:
             dispersion(self.wavevector, self.beta) * t + self.phase)
         return psi
 
-    def plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0):
+    def plot_streamfunction(self,
+                            xlim=(-np.pi, np.pi, 100),
+                            ylim=(-np.pi, np.pi, 100),
+                            t=0,
+                            lines=50):
         """
         Contour plot of the streamfunction of a Rossby wave.
 
@@ -146,6 +151,8 @@ class RossbyWave:
             (y start, y end, y points)
         t : float
             time
+        lines : float
+            scale of number of lines
 
         Returns
         -------
@@ -154,22 +161,22 @@ class RossbyWave:
         y = np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
         Z = self.streamfunction(X, Y, t)
-        plt.contour(X, Y, Z)
+        plt.contourf(X, Y, Z, lines, cmap="coolwarm")
         plt.xlabel('X')
         plt.ylabel('Y')
-        # cbar = plt.colorbar()
-        # cbar.ax.set_ylabel("Streamfunction value")
+        cbar = plt.colorbar()
+        cbar.ax.set_ylabel("Streamfunction value")
         if not isinstance(self, RossbyOcean):
             plt.title(
-                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
-            )
+                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
         else:
-            plt.title("RossbyOcean")
+            plt.title("RossbyOcean Streamfunction")
 
     def animate_streamfunction(self,
-                               xlim=(-1, 1, 100),
-                               ylim=(-1, 1, 100),
-                               tlim=(0, 1000, 101),
+                               xlim=(-np.pi, np.pi, 100),
+                               ylim=(-np.pi, np.pi, 100),
+                               tlim=(0, 3e13, 100),
+                               lines=50,
                                filename="streamfunction"):
         """
         Contour plot the streamfunction of a Rossby wave.
@@ -182,6 +189,8 @@ class RossbyWave:
             (y start, y end, y points)
         tlim : array_like
             (time start, time end, time points)
+        lines : float
+            scale of number of lines
         filename : str
             file saved as {filename}.gif
 
@@ -209,7 +218,7 @@ class RossbyWave:
                 )
             else:
                 plt.title("RossbyOcean")
-            plt.contour(xx, yy, plot[i])
+            plt.contourf(xx, yy, plot[i], lines, cmap="coolwarm")
 
         anim = FuncAnimation(fig,
                              update_plot,
@@ -408,7 +417,7 @@ class RossbyOcean(RossbyWave):
         Remove the RossbyWave at index in the RossbyOcean.
     """
 
-    def __init__(self, rossby_waves, beta=1):
+    def __init__(self, rossby_waves, beta=beta):
         self.waves = rossby_waves
         self.wavevectors = np.array([wave.wavevector for wave in rossby_waves])
         self.phases = np.array([wave.phase for wave in rossby_waves])
