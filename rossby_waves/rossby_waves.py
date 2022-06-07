@@ -1,8 +1,12 @@
 """Implementation of Rossby waves."""
 
-# overlap streamfunction on quiverplot to check points runge kutta follows lines
-# animate velocity
+# animate overlap of streamfunction on quiverplot to check points runge kutta follows lines
 # check beta???
+# plot concentrations?
+
+# solve Runge-Kutta-4
+# plot tracer path
+# animate tracer path
 
 import numpy as np
 import matplotlib.gridspec as gridspec
@@ -81,7 +85,7 @@ class RossbyWave:
     plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0):
         Contour plot of the streamfunction of a Rossby wave.
     animate_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), tlim=(0, 1000, 101), filename="streamfunction"):
-        Contour plot the streamfunction of a Rossby wave.
+        Animate the contour plot of the streamfunction of a Rossby wave.
     potentialfunction(self, x, y, t, eps=0.1):
         Return streamfunction of Rossby wave.
     velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
@@ -90,6 +94,8 @@ class RossbyWave:
         Quiverplot the velocity of the Rossby wave.
     plot_stream_velocity(self, xlim=(-np.pi, np.pi, 20, 100), ylim=(-np.pi, np.pi, 20, 100), t=0, eps=0.1, irrotational=False, solenoidal=False, lines=50):
         Contourplot of streamfunction with quiverplot of velocity field of a Rossby wave.
+    animate_velocity(self, xlim=(-np.pi, np.pi, 20), ylim=(-np.pi, np.pi, 20), tlim=(0, 3e13, 100), eps=0.1, irrotational=False, solenoidal=False, filename="velocityfield"):
+        Animate the quiver plot of the velocity field of a Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=beta):
@@ -177,7 +183,7 @@ class RossbyWave:
                                lines=50,
                                filename="streamfunction"):
         """
-        Contour plot the streamfunction of a Rossby wave.
+        Animate the contour plot of the streamfunction of a Rossby wave.
 
         Parameters
         ----------
@@ -314,14 +320,12 @@ class RossbyWave:
         
         Parameters
         ----------
-        t : float
-            time
         xlim : array_like
             (x start, x end, x points)
         ylim : array_like
             (y start, y end, y points)
-        density : float
-            density of streamplot arrows
+        t : float
+            time
         eps : float
             ratio of stream to potential function
         irrotational : bool
@@ -354,6 +358,68 @@ class RossbyWave:
             ax.set_title(
                 f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, t={t}"
             )
+
+    def animate_velocity(self,
+                         xlim=(-np.pi, np.pi, 20),
+                         ylim=(-np.pi, np.pi, 20),
+                         tlim=(0, 3e13, 100),
+                         eps=0.1,
+                         irrotational=False,
+                         solenoidal=False,
+                         filename="velocityfield"):
+        """
+        Animate the quiver plot of the velocity field of a Rossby wave.
+
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        tlim : array_like
+            (time start, time end, time points)
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+        filename : str
+            file saved as {filename}.gif
+
+        Returns
+        -------
+        """
+        x = np.linspace(*xlim)
+        y = np.linspace(*ylim)
+        t = np.linspace(*tlim)
+        xx, yy = np.meshgrid(x, y)
+        Y, T, X = np.meshgrid(y, t, x)
+        fig, ax = plt.subplots(1)
+        u, v = self.velocity(X, Y, T)
+
+        def init_func():
+            plt.cla()
+
+        def update_plot(i):
+            plt.cla()
+            plt.xlabel('X')
+            plt.ylabel('Y')
+            if not isinstance(self, RossbyOcean):
+                plt.title(
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}, beta={self.beta}"
+                )
+            else:
+                plt.title("RossbyOcean Velocity Field")
+            plt.quiver(xx, yy, u[i], v[i])
+
+        anim = FuncAnimation(fig,
+                             update_plot,
+                             frames=np.arange(0, len(t)),
+                             init_func=init_func)
+
+        writergif = PillowWriter(fps=30)
+        anim.save(f'{filename}.gif', writer=writergif)
 
     def plot_stream_velocity(self,
                              xlim=(-np.pi, np.pi, 20, 100),
@@ -420,11 +486,6 @@ class RossbyWave:
         else:
             plt.title("RossbyOcean Velocity Field with Streamfunction")
         plt.show()
-
-    # animate velocity?
-    # figure out beta default
-    # function plotting tracer path
-    # function plotting concentrations
 
 
 class RossbyOcean(RossbyWave):
@@ -658,9 +719,3 @@ class RossbyOcean(RossbyWave):
                 else:
                     p = 0
                 self.add_wave(RossbyWave((i, j), p))
-
-    # plot velocity
-    # animate velocity?
-
-
-# function solving Runge-Kutta-4
