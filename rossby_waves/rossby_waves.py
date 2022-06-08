@@ -287,7 +287,7 @@ class RossbyWave:
         if irrotational and solenoidal:
             raise ValueError(
                 "Wave cannot be both irrotational and solenoidal.")
-        if not solenoidal:
+        if not irrotational:
             # no phi
             v[0] += amplitude(self.wavevector) * self.l * np.sin(
                 self.k * x + self.l * y -
@@ -295,7 +295,7 @@ class RossbyWave:
             v[1] += -amplitude(self.wavevector) * self.k * np.sin(
                 self.k * x + self.l * y -
                 dispersion(self.wavevector, self.beta) * t + self.phase)
-        if not irrotational:
+        if not solenoidal:
             # no psi
             v[0] += -eps * amplitude(self.wavevector) * self.k * np.sin(
                 self.k * x + self.l * y -
