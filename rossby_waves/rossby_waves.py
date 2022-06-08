@@ -96,6 +96,12 @@ class RossbyWave:
         Contourplot of streamfunction with quiverplot of velocity field of a Rossby wave.
     animate_velocity(self, xlim=(-np.pi, np.pi, 20), ylim=(-np.pi, np.pi, 20), tlim=(0, 3e13, 100), eps=0.1, irrotational=False, solenoidal=False, filename="velocityfield"):
         Animate the quiver plot of the velocity field of a Rossby wave.
+    velocity_divergence(self, x, y, t, eps=0.1):
+        Return the velocity divergence at (x, y) at time t.
+    plot_velocity_divergence(self, xlim=(-np.pi, np.pi, 100), ylim=(-np.pi, np.pi, 100), t=0, eps=0.1, lines=50):
+        Contour plot of the streamfunction of a Rossby wave.
+    animate_velocity_divergence(self, xlim=(-np.pi, np.pi, 100), ylim=(-np.pi, np.pi, 100), tlim=(0, 3e13, 100), eps=0.1, lines=50, filename="velocity_divergence"):
+        Animate the contour plot of the streamfunction of a Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=beta):
@@ -600,6 +606,104 @@ class RossbyWave:
                 dispersion(self.wavevector, self.beta) * t + self.phase)
         return div
 
+    def plot_velocity_divergence(self,
+                                 xlim=(-np.pi, np.pi, 100),
+                                 ylim=(-np.pi, np.pi, 100),
+                                 t=0,
+                                 eps=0.1,
+                                 lines=50):
+        """
+        Contour plot of the streamfunction of a Rossby wave.
+
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
+        lines : float
+            scale of number of lines
+
+        Returns
+        -------
+        """
+        x = np.linspace(*xlim)
+        y = np.linspace(*ylim)
+        X, Y = np.meshgrid(x, y)
+        Z = self.velocity_divergence(X, Y, t, eps)
+        plt.contourf(X, Y, Z, lines, cmap="coolwarm")
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        cbar = plt.colorbar()
+        cbar.ax.set_ylabel("Divergence value")
+        if not isinstance(self, RossbyOcean):
+            plt.title(
+                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+        else:
+            plt.title("RossbyOcean Divergence")
+
+    def animate_velocity_divergence(self,
+                                    xlim=(-np.pi, np.pi, 100),
+                                    ylim=(-np.pi, np.pi, 100),
+                                    tlim=(0, 3e13, 100),
+                                    eps=0.1,
+                                    lines=50,
+                                    filename="velocity_divergence"):
+        """
+        Animate the contour plot of the streamfunction of a Rossby wave.
+
+        Parameters
+        ----------
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        tlim : array_like
+            (time start, time end, time points)
+        eps : float
+            ratio of stream to potential function
+        lines : float
+            scale of number of lines
+        filename : str
+            file saved as {filename}.gif
+
+        Returns
+        -------
+        """
+        x = np.linspace(*xlim)
+        y = np.linspace(*ylim)
+        t = np.linspace(*tlim)
+        xx, yy = np.meshgrid(x, y)
+        Y, T, X = np.meshgrid(y, t, x)
+        fig, ax = plt.subplots(1)
+        div = self.velocity_divergence(X, Y, T)
+
+        def init_func():
+            plt.cla()
+
+        def update_plot(i):
+            plt.cla()
+            plt.xlabel('X')
+            plt.ylabel('Y')
+            if not isinstance(self, RossbyOcean):
+                plt.title(
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+            else:
+                plt.title("RossbyOcean")
+            plt.contourf(xx, yy, div[i], lines, cmap="coolwarm")
+
+        anim = FuncAnimation(fig,
+                             update_plot,
+                             frames=np.arange(0, len(t)),
+                             init_func=init_func)
+
+        writergif = PillowWriter(fps=30)
+        anim.save(f'{filename}.gif', writer=writergif)
+
 
 class RossbyOcean(RossbyWave):
     """Collection of Rossby waves.
@@ -627,8 +731,10 @@ class RossbyOcean(RossbyWave):
         Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta).
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
-    potentialfunction(x, y, t, eps=0.1):
-        Return potentialfunction of Rossby wave.
+    velocity(self, x, y, t, eps=0.1, irrotational=False, solenoidal=False):
+        Return velocity of Rossby wave at x at time t.
+    velocity_divergence(self, x, y, t, eps=0.1):
+        Return the velocity divergence at (x, y) at time t.
     add_wave(wave):
         Add a RossbyWave to the RossbyOcean.
     add_random_wave(self, xlim=(-5, 5), ylim=(-5, 5), plim=(0, 2 * np.pi)):
