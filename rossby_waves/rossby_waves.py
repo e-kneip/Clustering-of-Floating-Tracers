@@ -1,13 +1,5 @@
 """Implementation of Rossby waves."""
 
-# check beta???
-# plot concentrations?
-
-# solve Runge-Kutta-4
-# plot tracer path
-# check Runge-Kutta follows lines
-# animate tracer path
-
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -744,8 +736,8 @@ class RossbyWave:
         Returns
         -------
         """
-        x, y, t = trajectory(self, x0, tlim[0], tlim[1], tlim[2] * 10, eps,
-                             irrotational, solenoidal)
+        x, y = trajectory(self, x0, tlim[0], tlim[1], tlim[2] * 100, eps,
+                          irrotational, solenoidal)
 
         xlim, ylim = list(xlim), list(ylim)
         x_vel, y_vel = np.linspace(*xlim[0:-1]), np.linspace(*ylim[0:-1])
@@ -771,8 +763,8 @@ class RossbyWave:
             plt.cla()
 
         def update_plot(i):
-            x_traj = x[0:i * 10]
-            y_traj = y[0:i * 10]
+            x_traj = x[0:i * 100]
+            y_traj = y[0:i * 100]
             plt.cla()
             plt.xlabel('X')
             plt.ylabel('Y')
@@ -1140,7 +1132,6 @@ def trajectory(r,
     t = t0
     i = 0
     trajectory = [x]
-    times = [t0]
     while i < n:
         k_1 = f(x, t)
         k_2 = f(x + h * k_1 / 2, t + h / 2)
@@ -1149,7 +1140,6 @@ def trajectory(r,
         x = x + h / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4)
         i += 1
         t += h
-        times.append(t)
         x[0] += xrange
         x[0] = (x[0] % (2 * xrange)) - xrange
         x[1] += yrange
@@ -1157,4 +1147,4 @@ def trajectory(r,
         trajectory.append(x)
     x_coords = [x[0] for x in trajectory]
     y_coords = [x[1] for x in trajectory]
-    return x_coords, y_coords, times
+    return x_coords, y_coords
