@@ -278,7 +278,7 @@ class RossbyWave:
             velocity at x at time t
         """
         # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
-        # eps*phi = psi = Re[A * exp[i(kx + ly - omega * t + phase)]]
+        # psi = 1/eps * phi = Re[A * exp[i(kx + ly - omega * t + phase)]]
 
         # dpsi/dx = Re[A * ik * exp[i(kx + ly - omega * t + phase)]]
         #         = A * -k * sin(kx + ly - omega * t + phase)
@@ -567,6 +567,39 @@ class RossbyWave:
         writergif = PillowWriter(fps=30)
         anim.save(f'{filename}.gif', writer=writergif)
 
+    def velocity_divergence(self, x, y, t, eps=0.1):
+        """
+        Return the velocity divergence at (x, y) at time t.
+        
+        Parameters
+        ----------
+        x : float
+            x coordinate
+        y : float
+            y coordinate
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
+
+        Returns
+        -------
+        div : float
+            divergence of velocity potential
+        """
+        # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
+        # psi = 1/eps * phi = Re[A * exp[i(kx + ly - omega * t + phase)]]
+        # div(v) = d^2phi/dx^2 + d^2phi/dy^2
+        #        = eps * [Re(d/dx A * ik * exp[i(kx + ly - omega * t + phase)] + d/dy A * il * exp[i(kx + ly - omega * t + phase)])]
+        #        = eps * [Re[(A * -k^2 + A * -l^2)exp[i(kx + ly - omega * t + phase)]]
+        #        = eps * A * (-l^2-k^2) * cos(kx + ly - omega * t + phase)
+
+        div = eps * amplitude(
+            self.wavevector) * (-self.l**2 - self.k**2) * np.cos(
+                self.k * x + self.l * y -
+                dispersion(self.wavevector, self.beta) * t + self.phase)
+        return div
+
 
 class RossbyOcean(RossbyWave):
     """Collection of Rossby waves.
@@ -685,6 +718,31 @@ class RossbyOcean(RossbyWave):
             v[0] += ou
             v[1] += ov
         return v
+
+    def velocity_divergence(self, x, y, t, eps=0.1):
+        """
+        Return the velocity divergence at (x, y) at time t.
+        
+        Parameters
+        ----------
+        x : float
+            x coordinate
+        y : float
+            y coordinate
+        t : float
+            time
+        eps : float
+            ratio of stream to potential function
+
+        Returns
+        -------
+        div : float
+            divergence of velocity potential
+        """
+        div = 0
+        for wave in self.waves:
+            div += wave.velocity_divergence(x, y, t, eps)
+        return div
 
     def add_wave(self, wave):
         """
