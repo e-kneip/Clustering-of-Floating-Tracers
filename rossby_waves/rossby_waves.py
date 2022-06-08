@@ -94,6 +94,8 @@ class RossbyWave:
         Contour plot of the streamfunction of a Rossby wave.
     animate_velocity_divergence(self, xlim=(-np.pi, np.pi, 100), ylim=(-np.pi, np.pi, 100), tlim=(0, 3e13, 100), eps=0.1, lines=50, filename="velocity_divergence"):
         Animate the contour plot of the streamfunction of a Rossby wave.
+    animate_trajectory(self, x0, xlim=(-np.pi, np.pi, 20, 100), ylim=(-np.pi, np.pi, 20, 100), tlim=(0, 3e13, 100), lines=50, markersize=2, eps=0.1, irrotational=False, solenoidal=False, filename="trajectory"):
+        Animate the quiver plot of the velocity field of a Rossby wave.
     """
 
     def __init__(self, wavevector, phase=0, beta=beta):
