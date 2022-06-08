@@ -823,7 +823,7 @@ class RossbyOcean(RossbyWave):
             ou, ov = wave.velocity(x, y, t, eps, irrotational, solenoidal)
             v[0] += ou
             v[1] += ov
-        return v
+        return np.array(v)
 
     def velocity_divergence(self, x, y, t, eps=0.1):
         """
