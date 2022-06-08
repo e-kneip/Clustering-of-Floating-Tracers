@@ -704,6 +704,95 @@ class RossbyWave:
         writergif = PillowWriter(fps=30)
         anim.save(f'{filename}.gif', writer=writergif)
 
+    def animate_trajectory(self,
+                           x0,
+                           xlim=(-np.pi, np.pi, 20, 100),
+                           ylim=(-np.pi, np.pi, 20, 100),
+                           tlim=(0, 3e13, 100),
+                           lines=50,
+                           markersize=2,
+                           eps=0.1,
+                           irrotational=False,
+                           solenoidal=False,
+                           filename="trajectory"):
+        """
+        Animate the quiver plot of the velocity field of a Rossby wave.
+
+        Parameters
+        ----------
+        x0 : np.array
+            initial position of particle
+        xlim : array_like
+            (x start, x end, x points)
+        ylim : array_like
+            (y start, y end, y points)
+        tlim : array_like
+            (time start, time end, time points)
+        lines : float
+            scale of number of lines
+        markersize : float
+            size of markers plotting trajectory
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+        filename : str
+            file saved as {filename}.gif
+
+        Returns
+        -------
+        """
+        x, y, t = trajectory(self, x0, tlim[0], tlim[1], tlim[2] * 10, eps,
+                             irrotational, solenoidal)
+
+        xlim, ylim = list(xlim), list(ylim)
+        x_vel, y_vel = np.linspace(*xlim[0:-1]), np.linspace(*ylim[0:-1])
+        xlim.pop(2)
+        ylim.pop(2)
+        x_str, y_str = np.linspace(*xlim), np.linspace(*ylim)
+        t = np.linspace(*tlim)
+
+        xx_vel, yy_vel = np.meshgrid(x_vel, y_vel)
+        Y_vel, T_vel, X_vel = np.meshgrid(y_vel, t, x_vel)
+        xx_str, yy_str = np.meshgrid(x_str, y_str)
+        Y_str, T_str, X_str = np.meshgrid(y_str, t, x_str)
+        fig, ax = plt.subplots(1)
+        u, v = self.velocity(X_vel,
+                             Y_vel,
+                             T_vel,
+                             eps=eps,
+                             irrotational=irrotational,
+                             solenoidal=solenoidal)
+        stream = self.streamfunction(X_str, Y_str, T_str)
+
+        def init_func():
+            plt.cla()
+
+        def update_plot(i):
+            x_traj = x[0:i * 10]
+            y_traj = y[0:i * 10]
+            plt.cla()
+            plt.xlabel('X')
+            plt.ylabel('Y')
+            if not isinstance(self, RossbyOcean):
+                plt.title(
+                    f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+            else:
+                plt.title("RossbyOcean Streamfunction on Velocity Field")
+            plt.contourf(xx_str, yy_str, stream[i], lines, cmap="coolwarm")
+            plt.quiver(xx_vel, yy_vel, u[i], v[i])
+            plt.plot(x_traj, y_traj, 'o', ms=markersize, color="magenta")
+
+        anim = FuncAnimation(fig,
+                             update_plot,
+                             frames=np.arange(0, len(t)),
+                             init_func=init_func)
+
+        writergif = PillowWriter(fps=30)
+        anim.save(f'{filename}.gif', writer=writergif)
+
 
 class RossbyOcean(RossbyWave):
     """Collection of Rossby waves.
@@ -888,7 +977,11 @@ class RossbyOcean(RossbyWave):
         self.l = self.wavevectors[:, 1]
         self = RossbyOcean(self.waves, beta=self.beta)
 
-    def add_random_wave(self, xlim=(-5, 5), ylim=(-5, 5), plim=(0, 2 * np.pi)):
+    def add_random_wave(self,
+                        xlim=(-5, 5),
+                        ylim=(-5, 5),
+                        plim=(0, 2 * np.pi),
+                        beta=beta):
         """
         Add a RossbyWave to the Rossbyocean with random wavevector.
 
@@ -900,6 +993,8 @@ class RossbyOcean(RossbyWave):
             (l, u) lower and upperbounds of l wavevector component
         plim : array_like
             (l, u) lower and upperbounds of phase
+        beta : float
+            scale of sphericity
 
         Returns
         -------
@@ -910,10 +1005,11 @@ class RossbyOcean(RossbyWave):
             k = (xlim[1] - xlim[0]) * np.random.random() + xlim[0]
             l = (ylim[1] - ylim[0]) * np.random.random() + ylim[0]
         phase = (plim[1] - plim[0]) * np.random.random() + plim[0]
-        self.add_wave(RossbyWave([k, l], phase))
+        self.add_wave(RossbyWave([k, l], phase, beta=beta))
 
     def add_random_waves(self,
                          n,
+                         beta=beta,
                          xlim=(-5, 5),
                          ylim=(-5, 5),
                          plim=(0, 2 * np.pi)):
@@ -924,6 +1020,8 @@ class RossbyOcean(RossbyWave):
         ----------
         n : int
             number of wavevectors to add
+        beta : float
+            scale of sphericity
         xlim : array_like
             (l, u) lower and upperbounds of k wavevector component
         ylim : array_like
@@ -935,7 +1033,7 @@ class RossbyOcean(RossbyWave):
         -------
         """
         for i in range(n):
-            self.add_random_wave(xlim, ylim, plim)
+            self.add_random_wave(xlim, ylim, plim, beta)
 
     def add_grid_waves(self, xlim=(-5, 5, 10), ylim=(-5, 5, 10), phase=True):
         """
@@ -963,3 +1061,100 @@ class RossbyOcean(RossbyWave):
                 else:
                     p = 0
                 self.add_wave(RossbyWave((i, j), p))
+
+
+def rossby_velocity(r, eps=0.1, irrotational=False, solenoidal=False):
+    """
+        Take RossbyWave or RossbyOcean and return the velocity field function.
+
+        Parameters
+        ----------
+        r : RossbyWave or RossbyOcean
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+
+        Returns
+        -------
+        f : function
+            velocity function which takes position vector, time and returns
+            velocity vector
+        """
+
+    def f(x, t):
+        return r.velocity(x[0], x[1], t, eps, irrotational, solenoidal)
+
+    return f
+
+
+def trajectory(r,
+               x0,
+               t0,
+               t,
+               n,
+               eps=0.1,
+               irrotational=False,
+               solenoidal=False,
+               xrange=np.pi,
+               yrange=np.pi):
+    """
+        Return lists of x-coords and y-coords of trajectory of particle with
+        initial conditions in the velocity field of the RossbyWave/Ocean.
+
+        Parameters
+        ----------
+        r : RossbyWave or RossbyOcean
+            (x start, x end, x points)
+        x0 : np.array
+            initial position of particle
+        t0 : float
+            starting time
+        n : int
+            number of timesteps
+        eps : float
+            ratio of stream to potential function
+        irrotational : bool
+            curl-free wave
+        solenoidal : bool
+            divergence-free wave
+        xrange : float
+            length of x-axis, e.g. if xrange = 3, the x-axis goes from -3 to 3
+        yrange : float
+            length of y-axis, e.g. if yrange = 3, the y-axis goes from -3 to 3
+
+        Returns
+        -------
+        x_coords : list
+            list of x-coordinates of particle trajectory
+        y_coords : list
+            list of y-coordinates of particle trajectory
+        times : list
+            list of times of particle trajectory
+        """
+    f = rossby_velocity(r, eps, irrotational, solenoidal)
+    h = t / n
+    x = x0
+    t = t0
+    i = 0
+    trajectory = [x]
+    times = [t0]
+    while i < n:
+        k_1 = f(x, t)
+        k_2 = f(x + h * k_1 / 2, t + h / 2)
+        k_3 = f(x + h * k_2 / 2, t + h / 2)
+        k_4 = f(x + h * k_3, t + h)
+        x = x + h / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4)
+        i += 1
+        t += h
+        times.append(t)
+        x[0] += xrange
+        x[0] = (x[0] % (2 * xrange)) - xrange
+        x[1] += yrange
+        x[1] = (x[1] % (2 * yrange)) - yrange
+        trajectory.append(x)
+    x_coords = [x[0] for x in trajectory]
+    y_coords = [x[1] for x in trajectory]
+    return x_coords, y_coords, times
