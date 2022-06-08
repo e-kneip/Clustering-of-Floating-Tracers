@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def rossby_velocity(r, eps=0.1, irrotational=False, solenoidal=False):
     """
         Take RossbyWave or RossbyOcean and return the velocity field function.
@@ -83,3 +86,12 @@ def trajectory(r, x0, t0, t, n, eps=0.1, irrotational=False,
     x_coords = [x[0] for x in trajectory]
     y_coords = [x[1] for x in trajectory]
     return x_coords, y_coords, times
+
+
+def grid_trajectory(r, xlim, ylim):
+    grid_points = []
+    x, y = np.linspace(*xlim), np.linspace(*ylim)
+    for i in x:
+        for j in y:
+            grid_points.append(np.array([i, j]))
+    return grid_points
