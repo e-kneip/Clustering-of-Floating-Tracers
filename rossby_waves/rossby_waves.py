@@ -177,10 +177,7 @@ class RossbyWave:
         plt.ylabel('Y')
         cbar = plt.colorbar(pad=0.1)
         cbar.ax.set_ylabel("Stream Function value")
-        if not isinstance(self, RossbyOcean):
-            plt.title(f"t={time} days")
-        else:
-            plt.title(f"t={time} days")
+        plt.title(f"t={time} days")
 
     def animate_streamfunction(self,
                                xlim=(-np.pi, np.pi, 100),
@@ -347,6 +344,7 @@ class RossbyWave:
         Returns
         -------
         """
+        time = round(t / (10_000_000 * 60 * 60 * 24), 1)
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
@@ -356,19 +354,10 @@ class RossbyWave:
                              eps=eps,
                              irrotational=irrotational,
                              solenoidal=solenoidal)
-
-        fig = plt.figure(figsize=(10, 5))
-        gs = gridspec.GridSpec(nrows=1, ncols=1)
-        ax = fig.add_subplot(gs[0, 0])
-        ax.quiver(X, Y, u, v)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        if isinstance(self, RossbyOcean):
-            ax.set_title(f"RossbyOcean Velocity at t={t}")
-        else:
-            ax.set_title(
-                f"RossbyWave Velocity: k={self.k}, l={self.l}, phase={self.phase}, t={t}"
-            )
+        plt.quiver(X, Y, u, v)
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.title(f"t={time} days")
 
     def animate_velocity(self,
                          xlim=(-np.pi, np.pi, 20),
@@ -469,6 +458,7 @@ class RossbyWave:
         Returns
         -------
         """
+        time = round(t / (10_000_000 * 60 * 60 * 24), 1)
         xlim, ylim = list(xlim), list(ylim)
         x_vel, y_vel = np.linspace(*xlim[0:-1]), np.linspace(*ylim[0:-1])
         xlim.pop(2)
@@ -480,7 +470,7 @@ class RossbyWave:
         Z_str = self.streamfunction(X_str, Y_str, t)
         cplot = plt.contourf(X_str, Y_str, Z_str, lines, cmap="coolwarm")
         cbar = plt.colorbar(cplot)
-        cbar.ax.set_ylabel("Streamfunction value")
+        cbar.ax.set_ylabel("Stream Function value")
 
         # quiver plot
         X_vel, Y_vel = np.meshgrid(x_vel, y_vel)
@@ -495,12 +485,7 @@ class RossbyWave:
         # labels
         plt.xlabel('X')
         plt.ylabel('Y')
-        if not isinstance(self, RossbyOcean):
-            plt.title(
-                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
-        else:
-            plt.title("RossbyOcean Velocity Field with Streamfunction")
-        plt.show()
+        plt.title(f"t={time} days, eps={eps}")
 
     def animate_stream_velocity(self,
                                 xlim=(-np.pi, np.pi, 20, 100),
