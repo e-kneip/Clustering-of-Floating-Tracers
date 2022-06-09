@@ -163,6 +163,8 @@ class RossbyWave:
         Returns
         -------
         """
+        # assumes t units are 0.1 microseconds
+        time = round(t / (10_000_000 * 60 * 60 * 24), 1)
         x = np.linspace(*xlim)
         y = np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
@@ -173,13 +175,12 @@ class RossbyWave:
             plt.contour(X, Y, Z, lines, cmap="coolwarm")
         plt.xlabel('X')
         plt.ylabel('Y')
-        cbar = plt.colorbar()
-        cbar.ax.set_ylabel("Streamfunction value")
+        cbar = plt.colorbar(pad=0.1)
+        cbar.ax.set_ylabel("Stream Function value")
         if not isinstance(self, RossbyOcean):
-            plt.title(
-                f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
+            plt.title(f"t={time} days")
         else:
-            plt.title("RossbyOcean Streamfunction")
+            plt.title(f"t={time} days")
 
     def animate_streamfunction(self,
                                xlim=(-np.pi, np.pi, 100),
