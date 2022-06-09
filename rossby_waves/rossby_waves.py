@@ -23,9 +23,8 @@ def amplitude(wavevector):
     amplitude : float
         amplitude of Rossby wave
     """
-    amplitude = np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 / 25) * (
-        wavevector[0]**2 + wavevector[1]**2)
-    # spectral power = 5 ie where this maxes, will have 5 periods over domain, sqrt(25)=5
+    amplitude = 1 / 6 * np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
+                               25) * (wavevector[0]**2 + wavevector[1]**2)
     return amplitude
 
 
@@ -839,14 +838,20 @@ class RossbyOcean(RossbyWave):
         self.beta = beta
 
     def __str__(self):
-        """Return string representation: RossbyOcean(RossbyWave(wavevector, phase), ...)."""
+        """
+        Return string representation:
+        RossbyOcean(RossbyWave(wavevector, phase), ...).
+        """
         waves = ""
         for wave in self.waves:
             waves += str(wave) + ", "
         return self.__class__.__name__ + "(" + waves[0:-2] + ")"
 
     def __repr__(self):
-        """Return canonical string representation: RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta)."""
+        """
+        Return canonical string representation:
+        RossbyOcean([RossbyWave(wavevector, phase, beta), ...], beta).
+        """
         return self.__class__.__name__ + "(" + str(self.waves) + ", " + str(
             self.beta) + ")"
 
