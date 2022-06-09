@@ -73,9 +73,9 @@ class RossbyWave:
         Return canonical string representation: RossbyWave([k, l], phase, beta).
     streamfunction(x, t):
         Return streamfunction of Rossby wave.
-    plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0):
+    plot_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), t=0, lines=50, filled=True):
         Contour plot of the streamfunction of a Rossby wave.
-    animate_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), tlim=(0, 1000, 101), filename="streamfunction"):
+    animate_streamfunction(self, xlim=(-1, 1, 100), ylim=(-1, 1, 100), tlim=(0, 1000, 101), lines=50, filled=True, filename="streamfunction"):
         Animate the contour plot of the streamfunction of a Rossby wave.
     potentialfunction(self, x, y, t, eps=0.1):
         Return streamfunction of Rossby wave.
@@ -142,7 +142,8 @@ class RossbyWave:
                             xlim=(-np.pi, np.pi, 100),
                             ylim=(-np.pi, np.pi, 100),
                             t=0,
-                            lines=50):
+                            lines=50,
+                            filled=True):
         """
         Contour plot of the streamfunction of a Rossby wave.
 
@@ -156,6 +157,8 @@ class RossbyWave:
             time
         lines : float
             scale of number of lines
+        filled : bool
+            if false, plot contour and if true, plot filled contour
 
         Returns
         -------
@@ -164,7 +167,10 @@ class RossbyWave:
         y = np.linspace(*ylim)
         X, Y = np.meshgrid(x, y)
         Z = self.streamfunction(X, Y, t)
-        plt.contourf(X, Y, Z, lines, cmap="coolwarm")
+        if filled:
+            plt.contourf(X, Y, Z, lines, cmap="coolwarm")
+        else:
+            plt.contour(X, Y, Z, lines, cmap="coolwarm")
         plt.xlabel('X')
         plt.ylabel('Y')
         cbar = plt.colorbar()
@@ -180,6 +186,7 @@ class RossbyWave:
                                ylim=(-np.pi, np.pi, 100),
                                tlim=(0, 3e13, 100),
                                lines=50,
+                               filled=True,
                                filename="streamfunction"):
         """
         Animate the contour plot of the streamfunction of a Rossby wave.
@@ -194,6 +201,8 @@ class RossbyWave:
             (time start, time end, time points)
         lines : float
             scale of number of lines
+        filled : bool
+            if false, plot contour and if true, plot filled contour
         filename : str
             file saved as {filename}.gif
 
@@ -220,7 +229,10 @@ class RossbyWave:
                     f"RossbyWave: k={self.k}, l={self.l}, phase={self.phase}")
             else:
                 plt.title("RossbyOcean")
-            plt.contourf(xx, yy, stream[i], lines, cmap="coolwarm")
+            if filled:
+                plt.contourf(xx, yy, stream[i], lines, cmap="coolwarm")
+            else:
+                plt.contour(xx, yy, stream[i], lines, cmap="coolwarm")
 
         anim = FuncAnimation(fig,
                              update_plot,
