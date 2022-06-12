@@ -1035,7 +1035,7 @@ class RossbyOcean(RossbyWave):
         for i in range(n):
             self.add_random_wave(xlim, ylim, plim, beta)
 
-    def add_grid_waves(self, xlim=(-5, 5, 11), ylim=(-5, 5, 11), phase=True):
+    def add_grid_waves(self, xlim=(-5, 5, 11), ylim=(-5, 5, 11), phase=True, beta=2e-11):
         """
         Add RossbyWaves with wavevectors (k, l) in a grid.
         
@@ -1060,10 +1060,10 @@ class RossbyOcean(RossbyWave):
                     p = 2 * np.pi * np.random.random()
                 else:
                     p = 0
-                self.add_wave(RossbyWave((i, j), p, beta=2e-11))
+                self.add_wave(RossbyWave((i, j), p, beta))
 
 
-def trajectory(ro, x0, t0, t, h, eps=0.1, irrotational=False, solenoidal=False, xrange=np.pi, yrange=np.pi, constant=False):
+def trajectory(ro, x0, t0, t, h, eps=0.1, xrange=np.pi, yrange=np.pi):
     """
         Return lists of x-coords and y-coords of trajectory of particles with
         initial conditions in the velocity field of the RossbyOcean.
@@ -1082,10 +1082,6 @@ def trajectory(ro, x0, t0, t, h, eps=0.1, irrotational=False, solenoidal=False, 
             step size
         eps : float
             ratio of stream to potential function
-        irrotational : bool
-            curl-free wave
-        solenoidal : bool
-            divergence-free wave
         xrange : float
             length of x-axis, e.g. if xrange = 3, the x-axis goes from -3 to 3
         yrange : float
@@ -1114,10 +1110,10 @@ def trajectory(ro, x0, t0, t, h, eps=0.1, irrotational=False, solenoidal=False, 
         list.append(x[j, 1])
         j += 1
     while i < n:
-        k_1 = vel(ro, x, t, eps, irrotational, solenoidal)
-        k_2 = vel(ro, x + h * k_1 / 2, t + h / 2, eps, irrotational, solenoidal)
-        k_3 = vel(ro, x + h * k_2 / 2, t + h / 2, eps, irrotational, solenoidal)
-        k_4 = vel(ro, x + h * k_3, t + h, eps, irrotational, solenoidal)
+        k_1 = vel(ro, x, t, eps)
+        k_2 = vel(ro, x + h * k_1 / 2, t + h / 2, eps)
+        k_3 = vel(ro, x + h * k_2 / 2, t + h / 2, eps)
+        k_4 = vel(ro, x + h * k_3, t + h, eps)
         x = x + h / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4)
         i += 1
         t += h
@@ -1137,7 +1133,7 @@ def trajectory(ro, x0, t0, t, h, eps=0.1, irrotational=False, solenoidal=False, 
     return x_coords, y_coords
 
 
-def grid(n, xrange=np.pi, yrange=np.pi):
+def grid(n, rho=0, xrange=np.pi, yrange=np.pi):
     """
         Return array of nxn evenly spaced points.
         
@@ -1163,11 +1159,14 @@ def grid(n, xrange=np.pi, yrange=np.pi):
     v = []
     for i in x:
         for j in y:
-            v.append([i, j])
+            if rho == 0:
+                v.append([i, j])
+            else:
+                v.append([i, j, rho])
     return np.array(v)
 
 
-def vel(ro, x, t, eps=0.1, irrotational=False, solenoidal=False):
+def vel(ro, x, t, eps=0.1):
     """
         Return array of velocity at x and time t of RossbyOcean.
         
@@ -1188,72 +1187,102 @@ def vel(ro, x, t, eps=0.1, irrotational=False, solenoidal=False):
         """
     L = np.shape(x)[0]
     v = np.zeros((L, 2))
-    if eps != 1:
-        for r in ro.waves:
-            v[:, 0] += (1 - eps) * r.amplitude * r.l * np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
-            v[:, 1] -= (1 - eps) * r.amplitude * r.k * np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
-    if eps != 0:
-        for r in ro.waves:
-            v[:, 0] += -eps * r.amplitude * r.k * np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
-            v[:, 1] += -eps * r.amplitude * r.l * np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+    for r in ro.waves:
+        s = np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+        dpsidy = -r.amplitude * r.l * s
+        dpsidx = -r.amplitude * r.k * s
+        if eps != 1:
+            v[:, 0] += (1 - eps) * -dpsidy
+            v[:, 1] += (1 - eps) * dpsidx
+        if eps != 0:
+            v[:, 0] += eps * dpsidx
+            v[:, 1] += eps * dpsidy
     return v
 
 
-def trajectory2(r, x0, t0, t, h, eps=0.1, irrotational=False, solenoidal=False, xrange=np.pi, yrange=np.pi, constant=False):
+def vel_den(ro, x, t, eps=0.1):
     """
-        Return lists of x-coords and y-coords of trajectory of particle with
-        initial conditions in the velocity field of the RossbyWave/Ocean.
-
+        Return array of velocity at x and time t of RossbyOcean.
+        
         Parameters
         ----------
-        r : RossbyWave or RossbyOcean
-            (x start, x end, x points)
-        x0 : nx2 np.array
-            initial positions of particles
-        t0 : float
-            starting time
-        n : int
-            number of timesteps
+        ro : RossbyOcean
+        
+        x : nx3 np.array
+            
+        t : float
+            time at which velocity will be evaluated at
         eps : float
             ratio of stream to potential function
-        irrotational : bool
-            curl-free wave
-        solenoidal : bool
-            divergence-free wave
-        xrange : float
-            length of x-axis, e.g. if xrange = 3, the x-axis goes from -3 to 3
-        yrange : float
-            length of y-axis, e.g. if yrange = 3, the y-axis goes from -3 to 3
-
         Returns
         -------
-        x_coords : list
-            list of x-coordinates of particle trajectory
-        y_coords : list
-            list of y-coordinates of particle trajectory
-        times : list
-            list of times of particle trajectory
+        v : nx2 np.array
+            velocity of the n points at t
         """
-    f = rossby_velocity(r, eps, irrotational, solenoidal)
+    L = np.shape(x)[0]
+    v = np.zeros((L, 3))
+    for r in ro.waves:
+        s = np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+        c = np.cos(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+        dpsidy = -r.amplitude * r.l * s
+        dpsidx = -r.amplitude * r.k * s
+        d2psidx2 = -r.amplitude * r.k**2 * c
+        d2psidy2 = -r.amplitude * r.l**2 * c
+        if eps != 1:
+            v[:, 0] += (1 - eps) * -dpsidy
+            v[:, 1] += (1 - eps) * dpsidx
+        if eps != 0:
+            v[:, 0] += eps * dpsidx
+            v[:, 1] += eps * dpsidy
+        v[:, 2] += -eps * (d2psidx2 + d2psidy2)
+    v[:, 2] = np.multiply(x[:, 2], v[:, 2])
+    return v
+
+
+def trajectory_den(ro, x0, t0, t, h, eps=0.1, xrange=np.pi, yrange=np.pi):
     n = (t - t0) / h
     x = x0
     t = t0
     i = 0
-    trajectory = [x]
-
+    num_points = x0.shape[0]
+    x_coords = [[] for x in range(num_points)]
+    y_coords = [[] for x in range(num_points)]
+    rho = [[] for x in range(num_points)]
+    j = 0
+    for list in x_coords:
+        list.append(x[j, 0])
+        j += 1
+    j = 0
+    for list in y_coords:
+        list.append(x[j, 1])
+        j += 1
+    j = 0
+    for list in rho:
+        list.append(x[j, 2])
+        j += 1
     while i < n:
-        k_1 = f(x, t)
-        k_2 = f(x + h * k_1 / 2, t + h / 2)
-        k_3 = f(x + h * k_2 / 2, t + h / 2)
-        k_4 = f(x + h * k_3, t + h)
+        k_1 = vel_den(ro, x, t, eps)
+        k_2 = vel_den(ro, x + h * k_1 / 2, t + h / 2, eps)
+        k_3 = vel_den(ro, x + h * k_2 / 2, t + h / 2, eps)
+        k_4 = vel_den(ro, x + h * k_3, t + h, eps)
         x = x + h / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4)
         i += 1
         t += h
-        x[0] += xrange
-        x[0] = (x[0] % (2 * xrange)) - xrange
-        x[1] += yrange
-        x[1] = (x[1] % (2 * yrange)) - yrange
-        trajectory.append(x)
-    x_coords = [x[0] for x in trajectory]
-    y_coords = [x[1] for x in trajectory]
-    return x_coords, y_coords
+        x[:, 0] += xrange
+        x[:, 0] = (x[:, 0] % (2 * xrange)) - xrange
+        x[:, 1] += yrange
+        x[:, 1] = (x[:, 1] % (2 * yrange)) - yrange
+        j = 0
+        for list in x_coords:
+            list.append(x[j, 0])
+            j += 1
+        j = 0
+        for list in y_coords:
+            list.append(x[j, 1])
+            j += 1
+        j = 0
+        for list in rho:
+            list.append(x[j, 2])
+            j += 1
+
+    return x_coords, y_coords, rho
