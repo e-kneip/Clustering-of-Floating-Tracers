@@ -1286,3 +1286,33 @@ def trajectory_den(ro, x0, t0, t, h, eps=0.1, xrange=np.pi, yrange=np.pi):
             j += 1
 
     return x_coords, y_coords, rho
+
+
+def vel_autocor(ro, x, t):
+    u = vel(ro, x, 0)
+    v = vel(ro, x, t)
+    a = 0
+    b = 0
+    for i in range(np.shape(v)[0]):
+        a += (np.dot(u[i],v[i]))
+        b += np.dot(v[i],v[i])
+    return a/b*np.shape(v)[0]
+
+
+def dxt(ro, x, t, e):
+    p1, p2 = trajectory(ro, x, 0, t, (t/2e3), eps=e)
+    p3, p4 = np.array(p1), np.array(p2)
+    a = 0
+    for i in range(len(p1)):
+        a += (p3[i, 2000] - p3[i, 00]) ** 2
+    return a/len(p1)
+
+
+def dyt(ro, x, t, e):
+    p1, p2 = trajectory(ro, x, 0, t, (t/2e3), eps=e)
+    p3, p4 = np.array(p1), np.array(p2)
+    a = 0
+    for i in range(len(p1)):
+        a += (p4[i, 2000] - p4[i, 0]) ** 2
+    return a/len(p2)
+    
