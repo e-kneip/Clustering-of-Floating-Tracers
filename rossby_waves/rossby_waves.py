@@ -23,7 +23,7 @@ def amplitude(wavevector):
     amplitude : float
         amplitude of Rossby wave
     """
-    amplitude = 1 / 6 * np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
+    amplitude = 1e-11 * np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
                                25) * (wavevector[0]**2 + wavevector[1]**2)
     return amplitude
 
@@ -103,9 +103,10 @@ class RossbyWave:
         self.l = wavevector[1]
         self.phase = phase
         self.beta = beta
-        self.omega = -beta * wavevector[0] / (wavevector[0]**2 + wavevector[1]**2)
-        self.amplitude = np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 / 25) * (
-                         wavevector[0]**2 + wavevector[1]**2)
+        self.omega = -beta * wavevector[0] / (wavevector[0]**2 +
+                                              wavevector[1]**2)
+        self.amplitude = np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
+                                25) * (wavevector[0]**2 + wavevector[1]**2)
 
     def __str__(self):
         """Return string representation: RossbyWave([k, l], phase)."""
@@ -1035,7 +1036,11 @@ class RossbyOcean(RossbyWave):
         for i in range(n):
             self.add_random_wave(xlim, ylim, plim, beta)
 
-    def add_grid_waves(self, xlim=(-5, 5, 11), ylim=(-5, 5, 11), phase=True, beta=2e-11):
+    def add_grid_waves(self,
+                       xlim=(-5, 5, 11),
+                       ylim=(-5, 5, 11),
+                       phase=True,
+                       beta=2e-11):
         """
         Add RossbyWaves with wavevectors (k, l) in a grid.
         
@@ -1151,11 +1156,11 @@ def grid(n, rho=0, xrange=np.pi, yrange=np.pi):
         np.array
         """
     a, b = -xrange, xrange
-    h = (b-a)/n
-    x = [a+h*(1/2 + i) for i in range(n)]
+    h = (b - a) / n
+    x = [a + h * (1 / 2 + i) for i in range(n)]
     a, b = -yrange, yrange
-    h = (b-a)/n
-    y = [a+h*(1/2 + i) for i in range(n)]
+    h = (b - a) / n
+    y = [a + h * (1 / 2 + i) for i in range(n)]
     v = []
     for i in x:
         for j in y:
@@ -1188,7 +1193,7 @@ def vel(ro, x, t, eps=0.1):
     L = np.shape(x)[0]
     v = np.zeros((L, 2))
     for r in ro.waves:
-        s = np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+        s = np.sin(r.k * x[:, 0] + r.l * x[:, 1] - r.omega * t + r.phase)
         dpsidy = -r.amplitude * r.l * s
         dpsidx = -r.amplitude * r.k * s
         if eps != 1:
@@ -1222,8 +1227,8 @@ def vel_den(ro, x, t, eps=0.1):
     L = np.shape(x)[0]
     v = np.zeros((L, 3))
     for r in ro.waves:
-        s = np.sin(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
-        c = np.cos(r.k*x[:, 0] + r.l*x[:, 1] - r.omega*t + r.phase)
+        s = np.sin(r.k * x[:, 0] + r.l * x[:, 1] - r.omega * t + r.phase)
+        c = np.cos(r.k * x[:, 0] + r.l * x[:, 1] - r.omega * t + r.phase)
         dpsidy = -r.amplitude * r.l * s
         dpsidx = -r.amplitude * r.k * s
         d2psidx2 = -r.amplitude * r.k**2 * c
