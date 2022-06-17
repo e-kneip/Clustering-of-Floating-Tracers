@@ -313,7 +313,7 @@ class RossbyWave:
             self.phase) - eps * amplitude(self.wavevector) * self.k * np.sin(
                 self.k * x + self.l * y -
                 dispersion(self.wavevector, self.beta) * t + self.phase)
-        v[1] = (1 - eps) * amplitude(self.wavevector) * self.l * np.sin(
+        v[1] = -(1 - eps) * amplitude(self.wavevector) * self.k * np.sin(
             self.k * x + self.l * y -
             dispersion(self.wavevector, self.beta) * t +
             self.phase) - eps * amplitude(self.wavevector) * self.l * np.sin(
