@@ -291,6 +291,7 @@ class RossbyWave:
             velocity at x at time t
         """
         # v = (-dpsi/dy, dpsi/dx) + (dphi/dx, dphi/dy)
+        #   = (1-eps)(-dpsi/dy, dpsi/dx) + eps(dpsi/dx, dpsi/dy)
         # psi = 1/eps * phi = Re[A * exp[i(kx + ly - omega * t + phase)]]
 
         # dpsi/dx = Re[A * ik * exp[i(kx + ly - omega * t + phase)]]
@@ -302,20 +303,20 @@ class RossbyWave:
         if irrotational and solenoidal:
             raise ValueError(
                 "Wave cannot be both irrotational and solenoidal.")
-        if not irrotational:
-            # no phi
-            v[0] += amplitude(self.wavevector) * self.l * np.sin(
+        elif irrotational:
+            eps = 1
+        elif solenoidal:
+            eps = 0
+        v[0] = (1 - eps) * amplitude(self.wavevector) * self.l * np.sin(
+            self.k * x + self.l * y -
+            dispersion(self.wavevector, self.beta) * t +
+            self.phase) - eps * amplitude(self.wavevector) * self.k * np.sin(
                 self.k * x + self.l * y -
                 dispersion(self.wavevector, self.beta) * t + self.phase)
-            v[1] += -amplitude(self.wavevector) * self.k * np.sin(
-                self.k * x + self.l * y -
-                dispersion(self.wavevector, self.beta) * t + self.phase)
-        if not solenoidal:
-            # no psi
-            v[0] += -eps * amplitude(self.wavevector) * self.k * np.sin(
-                self.k * x + self.l * y -
-                dispersion(self.wavevector, self.beta) * t + self.phase)
-            v[1] += -eps * amplitude(self.wavevector) * self.l * np.sin(
+        v[1] = (1 - eps) * amplitude(self.wavevector) * self.l * np.sin(
+            self.k * x + self.l * y -
+            dispersion(self.wavevector, self.beta) * t +
+            self.phase) - eps * amplitude(self.wavevector) * self.l * np.sin(
                 self.k * x + self.l * y -
                 dispersion(self.wavevector, self.beta) * t + self.phase)
         return np.array(v)
@@ -1299,25 +1300,24 @@ def vel_autocor(ro, x, t, e=0.1):
     a = 0
     b = 0
     for i in range(np.shape(v)[0]):
-        a += (np.dot(u[i],v[i]))
-        b += np.dot(v[i],v[i])
-    return a/b*np.shape(v)[0]
+        a += (np.dot(u[i], v[i]))
+        b += np.dot(v[i], v[i])
+    return a / b * np.shape(v)[0]
 
 
 def dxt(ro, x, t, e=0.1):
-    p1, p2 = trajectory(ro, x, 0, t, (t/2e3), eps=e)
+    p1, p2 = trajectory(ro, x, 0, t, (t / 2e3), eps=e)
     p3, p4 = np.array(p1), np.array(p2)
     a = 0
     for i in range(len(p1)):
-        a += (p3[i, 2000] - p3[i, 00]) ** 2
-    return a/len(p1)
+        a += (p3[i, 2000] - p3[i, 00])**2
+    return a / len(p1)
 
 
 def dyt(ro, x, t, e=0.1):
-    p1, p2 = trajectory(ro, x, 0, t, (t/2e3), eps=e)
+    p1, p2 = trajectory(ro, x, 0, t, (t / 2e3), eps=e)
     p3, p4 = np.array(p1), np.array(p2)
     a = 0
     for i in range(len(p1)):
-        a += (p4[i, 2000] - p4[i, 0]) ** 2
-    return a/len(p2)
-    
+        a += (p4[i, 2000] - p4[i, 0])**2
+    return a / len(p2)
