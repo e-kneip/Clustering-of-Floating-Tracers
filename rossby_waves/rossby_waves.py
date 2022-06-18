@@ -1301,9 +1301,9 @@ def vel_autocor(ro, x, t, e=0.1):
     a = 0
     b = 0
     for i in range(np.shape(v)[0]):
-        a += (np.dot(u[i], v[i]))
-        b += np.dot(v[i], v[i])
-    return a / b * np.shape(v)[0]
+        a += (np.dot(u[i],v[i]))
+        b += np.dot(v[i],v[i])
+    return (a/b)*np.shape(v)[0]
 
 
 def dxt(ro, x, t, e=0.1):
