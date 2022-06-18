@@ -1057,6 +1057,7 @@ class RossbyOcean(RossbyWave):
         Returns
         -------
         """
+        np.random.seed(5)
         x, y = np.linspace(*xlim), np.linspace(*ylim)
         for i in x:
             for j in y:
