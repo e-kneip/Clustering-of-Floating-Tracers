@@ -105,8 +105,8 @@ class RossbyWave:
         self.beta = beta
         self.omega = -beta * wavevector[0] / (wavevector[0]**2 +
                                               wavevector[1]**2)
-        self.amplitude = np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
-                                25) * (wavevector[0]**2 + wavevector[1]**2)
+        self.amplitude = (np.exp(-wavevector[0]**2 / 25 - wavevector[1]**2 /
+                                25) * (wavevector[0]**2 + wavevector[1]**2)) * 1e-13
 
     def __str__(self):
         """Return string representation: RossbyWave([k, l], phase)."""
@@ -1295,9 +1295,12 @@ def trajectory_den(ro, x0, t0, t, h, eps=0.1, xrange=np.pi, yrange=np.pi):
     return x_coords, y_coords, rho
 
 
-def vel_autocor(ro, x, t, e=0.1):
-    u = vel(ro, x, 0, eps=e)
-    v = vel(ro, x, t, eps=e)
+def vel_autocor(ro, x, t0, t1, e=0.1):
+    xcoords, ycoords = trajectory(ro,x,t0,t1, 2.5e9, eps=e)
+    initial = np.vstack((np.array(xcoords)[:,0],np.array(ycoords)[:,0])).T
+    final = np.vstack((np.array(xcoords)[:,-1],np.array(ycoords)[:,-1])).T
+    u = vel(ro, initial, t0, eps=e)
+    v = vel(ro, final, t1, eps=e)
     a = 0
     b = 0
     for i in range(np.shape(v)[0]):
