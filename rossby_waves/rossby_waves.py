@@ -1325,3 +1325,81 @@ def dyt(ro, x, t, e=0.1):
     for i in range(len(p1)):
         a += (p4[i, 2000] - p4[i, 0])**2
     return a / len(p2)
+
+def dt2(data):
+    x = np.array(data)
+    a = []
+
+    for j in range(len(data[1])):
+        
+        y = x[:,j] - x[:,0]
+        b = np.dot(y,y)
+        a.append(b/10000)
+    return a
+
+def traj2(ro, x0, t0, t, h, eps=0.1, xrange=np.pi, yrange=np.pi):
+    """
+        Return lists of x-coords and y-coords of trajectory of particles with
+        initial conditions in the velocity field of the RossbyOcean.
+
+        Parameters
+        ----------
+        ro : RossbyOcean
+
+        x0 : nx2 np.array
+            initial positions of n particles
+        t0 : float
+            starting time
+        t : float
+            ending time
+        h : float
+            step size
+        eps : float
+            ratio of stream to potential function
+        xrange : float
+            length of x-axis, e.g. if xrange = 3, the x-axis goes from -3 to 3
+        yrange : float
+            length of y-axis, e.g. if yrange = 3, the y-axis goes from -3 to 3
+
+        Returns
+        -------
+        x_coords : list
+            list of lists of x-coordinates of particle trajectories, e.g. x[i] gives x-coordinates of the i-1th particle's trajectory
+        y_coords : list
+            list of lists of y-coordinates of particle trajectories, e.g. y[i] gives y-coordinates of the i-1th particle's trajectory
+        """
+    n = (t - t0) / h
+    x = x0
+    t = t0
+    i = 0
+    num_points = x0.shape[0]
+    x_coords = [[] for x in range(num_points)]
+    y_coords = [[] for x in range(num_points)]
+    j = 0
+    for list in x_coords:
+        list.append(x[j, 0])
+        j += 1
+    j = 0
+    for list in y_coords:
+        list.append(x[j, 1])
+        j += 1
+    while i < n:
+        k_1 = vel(ro, x, t, eps)
+        k_2 = vel(ro, x + h * k_1 / 2, t + h / 2, eps)
+        k_3 = vel(ro, x + h * k_2 / 2, t + h / 2, eps)
+        k_4 = vel(ro, x + h * k_3, t + h, eps)
+        x = x + h / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4)
+        i += 1
+        t += h
+        j = 0
+        for list in x_coords:
+            list.append(x[j, 0])
+            j += 1
+        j = 0
+        for list in y_coords:
+            list.append(x[j, 1])
+            j += 1
+
+    return x_coords, y_coords
+
+
